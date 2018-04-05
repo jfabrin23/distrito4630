@@ -7,6 +7,7 @@ import Usuario from '@/pages/Usuario'
 import TipoDocumento from '@/pages/TipoDocumento'
 import Categoria from '@/pages/Categoria'
 import DocumentoBusca from '@/pages/DocumentoBusca'
+import DocumentoCadastro from '@/pages/DocumentoCadastro'
 
 Vue.use(Router)
 
@@ -46,6 +47,11 @@ export default new Router({
       path: '/documentobusca',
       name: 'DocumentoBusca',
       component: DocumentoBusca
+    },
+    {
+      path: '/documentocadastro',
+      name: 'DocumentoCadastro',
+      component: DocumentoCadastro
     },
     {
       path: '*',

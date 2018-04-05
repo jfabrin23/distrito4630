@@ -11,16 +11,20 @@
           </v-layout>
         </v-container>
       </v-content>
+
+      <Rodape />
     </v-app>
   </div>
 </template>
 
 <script>
 import Cabecalho from '@/components/Header'
+import Rodape from '@/components/Footer'
 export default {
   name: 'home',
   components: {
-    Cabecalho
+    Cabecalho,
+    Rodape
   }
 }
 </script>

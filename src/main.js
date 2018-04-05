@@ -10,7 +10,7 @@ import 'vuetify/dist/vuetify.min.css'
 
 Vue.use(Vuetify, {
   theme: {
-    primary: colors.red.base,
+    primary: '#D81B5D',
     secondary: colors.grey.darken1,
     accent: colors.indigo.accent1,
     modal: colors.red.lighten2

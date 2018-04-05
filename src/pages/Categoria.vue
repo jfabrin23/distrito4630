@@ -7,6 +7,9 @@
       <!-- Conteudo -->
       <v-content>
         <v-container fluid>
+          <h1>Cadastro de Categoria</h1>
+          <hr />
+
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-layout row wrap>
               <v-flex xs3>
@@ -25,7 +28,7 @@
               <v-flex xs3>
                 <v-text-field label="Tipo de Documento" v-model="categoria.tipoDocumento.codigo" :rules="regrasValidacao.tipoDocumento" disabled></v-text-field>
               </v-flex>
-              <v-flex xs8>
+              <v-flex xs8 pl-3>
                 <v-text-field v-model="categoria.tipoDocumento.nome" disabled></v-text-field>
               </v-flex>
               <v-flex xs1>
@@ -38,12 +41,14 @@
                 <v-select label="Situação" v-model="categoria.situacao" :items="cbb.situacao" :rules="regrasValidacao.situacao" required autocomplete></v-select>
               </v-flex>
 
-              <v-btn @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-layout>
           </v-form>
         </v-container>
       </v-content>
+
+      <Rodape />
 
       <v-dialog v-model="categorias" width="800px">
         <v-card>
@@ -87,10 +92,12 @@
 
 <script>
 import Cabecalho from '@/components/Header'
+import Rodape from '@/components/Footer'
 export default {
   name: 'Categoria',
   components: {
-    Cabecalho
+    Cabecalho,
+    Rodape
   },
   data () {
     return {

@@ -7,6 +7,9 @@
       <!-- Conteudo -->
       <v-content>
         <v-container fluid>
+          <h1>Cadastro de Tipo de Documento</h1>
+          <hr />
+
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-layout row wrap>
               <v-flex xs3>
@@ -21,12 +24,14 @@
                 <v-text-field label="Name" v-model="tipoDocumento.nome" :rules="regrasValidacao.nome" required></v-text-field>
               </v-flex>
 
-              <v-btn @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-layout>
           </v-form>
         </v-container>
       </v-content>
+
+      <Rodape />
 
       <v-dialog v-model="tipoDocumentos" width="800px">
         <v-card>
@@ -51,10 +56,13 @@
 
 <script>
 import Cabecalho from '@/components/Header'
+import Rodape from '@/components/Footer'
+
 export default {
   name: 'TipoDocumento',
   components: {
-    Cabecalho
+    Cabecalho,
+    Rodape
   },
   data () {
     return {

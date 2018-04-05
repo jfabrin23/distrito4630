@@ -1,5 +1,5 @@
 <template>
-  <div class="TipoDocumento">
+  <div class="DocumentoBusca">
     <v-app>
       <!-- Header -->
       <Cabecalho />
@@ -7,111 +7,132 @@
       <!-- Conteudo -->
       <v-content>
         <v-container fluid>
-          <v-form v-model="valid" ref="form" lazy-validation>
-            <v-layout row wrap>
-              <v-flex xs3>
-                <v-text-field label="Código" v-model="tipoDocumento.codigo" disabled></v-text-field>
-              </v-flex>
-              <v-flex xs9>
-                <v-btn flat icon color="primary" @click.stop="tipoDocumentos = !tipoDocumentos">
-                  <v-icon>search</v-icon>
-                </v-btn>
-              </v-flex>
-              <v-flex xs12>
-                <v-text-field label="Name" v-model="tipoDocumento.nome" :rules="regrasValidacao.nome" required></v-text-field>
-              </v-flex>
+          <h1>Consulta de Documentos</h1>
+          <hr />
 
-              <v-btn @click="salvar" :disabled="!valid">Salvar</v-btn>
-              <v-btn @click="limpar">Limpar</v-btn>
-            </v-layout>
-          </v-form>
+          <v-card>
+            <v-card-title class="grey lighten-4 py-4 title">
+              Filtro
+            </v-card-title>
+            <v-container grid-list-sm class="pa-4">
+              <v-form v-model="valid" ref="form" lazy-validation>
+                <v-layout row wrap>
+                  <v-flex xs12>
+                    <v-select v-model="filtro.categoria" label="Categoria" chips tags :items="cbb.categoria">
+                      <template slot="selection" slot-scope="data">
+                        <v-chip close @input="removeCategoria(data.item)" :selected="data.selected" >
+                          <strong>{{ data.item }}</strong>&nbsp;
+                        </v-chip>
+                      </template>
+                    </v-select>
+                  </v-flex>
+
+                  <v-flex xs12>
+                    <v-select v-model="filtro.tipoDocumento" label="Tipo de Documento" chips tags :items="cbb.tipoDocumento">
+                      <template slot="selection" slot-scope="data">
+                        <v-chip close @input="removeTipoDocumento(data.item)" :selected="data.selected" >
+                          <strong>{{ data.item }}</strong>&nbsp;
+                        </v-chip>
+                      </template>
+                    </v-select>
+                  </v-flex>
+
+                  <v-btn color="primary" @click="buscar">Buscar</v-btn>
+                  <v-btn @click="limpar">Limpar</v-btn>
+                </v-layout>
+              </v-form>
+            </v-container>
+          </v-card>
+
+          <v-data-table :headers="tblResultado.headers" :items="tblResultado.items" hide-actions item-key="name" v-if="tabela">
+            <template slot="items" slot-scope="props">
+              <tr @click="selecionarUsuario(props.item)">
+                <td>{{ props.item.codigo }}</td>
+                <td>{{ props.item.tipodocumento.nome }}</td>
+                <td>{{ props.item.categoria.nome }}</td>
+              </tr>
+            </template>
+          </v-data-table>
         </v-container>
       </v-content>
 
-      <v-dialog v-model="tipoDocumentos" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Tipo de Documentos
-          </v-card-title>
-          <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstTipoDocumento.headers" :items="lstTipoDocumento.items" hide-actions item-key="name">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionar(props.item)">
-                  <td>{{ props.item.codigo }}</td>
-                  <td>{{ props.item.nome }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <Rodape />
     </v-app>
   </div>
 </template>
 
 <script>
 import Cabecalho from '@/components/Header'
+import Rodape from '@/components/Footer'
+
 export default {
-  name: 'TipoDocumento',
+  name: 'DocumentoBusca',
   components: {
-    Cabecalho
+    Cabecalho,
+    Rodape
   },
   data () {
     return {
       valid: true,
-      tipoDocumentos: false,
-      tipoDocumento: {
-        codigo: '',
-        nome: ''
+      tabela: false,
+      filtro: {
+        tipoDocumento: [],
+        categoria: []
       },
-      regrasValidacao: {
-        nome: [
-          v => !!v || 'Nome é obrigatório'
-        ]
+      cbb: {
+        tipoDocumento: [ 'Secretaria', 'Tesouraria', 'Projetos' ],
+        categoria: [ 'Secretaria', 'Tesouraria', 'Internos', 'Internacionais' ]
       },
-      lstTipoDocumento: {
+      tblResultado: {
         headers: [
           { text: 'Código', value: 'codigo' },
-          { text: 'Nome', value: 'nome' }
+          { text: 'Tipo Documento', value: 'tipodocumento' },
+          { text: 'Categoria', value: 'categoria' }
         ],
         items: [
           {
             value: false,
             codigo: 1,
-            nome: 'Secretaria'
+            tipodocumento: {
+              codigo: 1,
+              nome: 'Secretaria'
+            },
+            categoria: {
+              codigo: 1,
+              nome: 'Secretaria'
+            }
           },
           {
             value: false,
-            codigo: 2,
-            nome: 'Tesouraria'
-          },
-          {
-            value: false,
-            codigo: 3,
-            nome: 'Projetos'
+            codigo: 1,
+            tipodocumento: {
+              codigo: 1,
+              nome: 'Secretaria'
+            },
+            categoria: {
+              codigo: 1,
+              nome: 'Secretaria'
+            }
           }
         ]
       }
     }
   },
   methods: {
-    salvar () {
-      if (this.$refs.form.validate()) {
-        // Native form submission is not yet supported
-        /* axios.post('/api/submit', {
-          name: this.name,
-          email: this.email,
-          select: this.select,
-          checkbox: this.checkbox
-        }) */
-      }
+    buscar () {
+      this.tabela = true
     },
     limpar () {
+      this.tabela = false
       this.$refs.form.reset()
     },
-    selecionar (item) {
-      this.tipoDocumentos = false
-      this.tipoDocumento = item
+    removeCategoria (item) {
+      this.filtro.categoria.splice(this.filtro.categoria.indexOf(item), 1)
+      this.filtro.categoria = [this.filtro.categoria]
+    },
+    removeTipoDocumento (item) {
+      this.filtro.tipoDocumento.splice(this.filtro.tipoDocumento.indexOf(item), 1)
+      this.filtro.tipoDocumento = [this.filtro.tipoDocumento]
     }
   }
 }

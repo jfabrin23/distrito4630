@@ -5,6 +5,9 @@
         <v-container fluid fill-height>
           <v-layout align-center justify-center>
             <v-flex xs12 sm8 md4>
+              <v-layout align-center justify-center pb-3>
+                <img :src="logoRosa" alt="logo" width="80%">
+              </v-layout>
               <v-card class="elevation-12">
                 <v-toolbar dark color="primary">
                   <v-toolbar-title>Login</v-toolbar-title>
@@ -34,7 +37,8 @@ export default {
   name: 'login',
   data () {
     return {
-      drawer: null
+      drawer: null,
+      logoRosa: require('../../static/img/ROSA.png')
     }
   },
   methods: {

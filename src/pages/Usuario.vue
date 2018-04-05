@@ -7,6 +7,9 @@
       <!-- Conteudo -->
       <v-content>
         <v-container fluid>
+          <h1>Cadastro de Usuário</h1>
+          <hr />
+
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-layout row wrap>
               <v-flex xs3>
@@ -17,13 +20,15 @@
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
+
               <v-flex xs12>
                 <v-text-field label="Nome" v-model="usuario.nome" :rules="regrasValidacao.nome" required></v-text-field>
               </v-flex>
+
               <v-flex xs3>
                 <v-text-field label="Clube" v-model="usuario.clube.codigo" :rules="regrasValidacao.clube" disabled></v-text-field>
               </v-flex>
-              <v-flex xs8>
+              <v-flex xs8 pl-3>
                 <v-text-field v-model="usuario.clube.nome" disabled></v-text-field>
               </v-flex>
               <v-flex xs1>
@@ -31,25 +36,31 @@
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
+
               <v-flex xs12>
                 <v-text-field label="Login" v-model="usuario.login" :rules="regrasValidacao.login" required></v-text-field>
               </v-flex>
+
               <v-flex xs12>
                 <v-text-field label="Senha" v-model="usuario.senha" counter :rules="!usuario.codigo ? regrasValidacao.senha : ''" :required="!usuario.codigo" :append-icon="e1 ? 'visibility' : 'visibility_off'" :append-icon-cb="() => (e1 = !e1)" :type="e1 ? 'password' : 'text'" :disabled="usuario.codigo ? true : false"></v-text-field>
               </v-flex>
+
               <v-flex xs12>
                 <v-select label="Tipo" v-model="usuario.tipo" :items="cbb.tipo" :rules="regrasValidacao.tipo" required autocomplete></v-select>
               </v-flex>
+
               <v-flex xs12>
                 <v-select label="Situação" v-model="usuario.situacao" :items="cbb.situacao" :rules="regrasValidacao.situacao" required autocomplete></v-select>
               </v-flex>
 
-              <v-btn @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-layout>
           </v-form>
         </v-container>
       </v-content>
+
+      <Rodape />
 
       <!-- Modal Usuários -->
       <v-dialog v-model="usuarios" width="800px">
@@ -96,10 +107,13 @@
 
 <script>
 import Cabecalho from '@/components/Header'
+import Rodape from '@/components/Footer'
+
 export default {
   name: 'Usuario',
   components: {
-    Cabecalho
+    Cabecalho,
+    Rodape
   },
   data () {
     return {
