@@ -21,7 +21,7 @@
                 </v-btn>
               </v-flex>
               <v-flex xs12>
-                <v-text-field label="Name" v-model="clube.nome" :rules="regrasValidacao.nome" required></v-text-field>
+                <v-text-field label="Nome" v-model="clube.nome" :rules="regrasValidacao.nome" required></v-text-field>
               </v-flex>
               <v-flex xs12>
                 <v-select label="Situação" v-model="clube.situacao" :items="cbb.situacao" :rules="regrasValidacao.situacao" required autocomplete></v-select>
@@ -86,8 +86,8 @@ export default {
       },
       cbb: {
         situacao: [
-          'Ativo',
-          'Inativo'
+          1,
+          0
         ]
       },
       lstClube: {
@@ -164,13 +164,7 @@ export default {
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
-        // Native form submission is not yet supported
-        /* axios.post('/api/submit', {
-          name: this.name,
-          email: this.email,
-          select: this.select,
-          checkbox: this.checkbox
-        }) */
+        this.axios.post('http://www.rotaract4630.com.br/rac4630/public/api/clube', this.clube)
       }
     },
     limpar () {

@@ -22,19 +22,7 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field label="Name" v-model="categoria.nome" :rules="regrasValidacao.nome" required></v-text-field>
-              </v-flex>
-
-              <v-flex xs3>
-                <v-text-field label="Tipo de Documento" v-model="categoria.tipoDocumento.codigo" :rules="regrasValidacao.tipoDocumento" disabled></v-text-field>
-              </v-flex>
-              <v-flex xs8 pl-3>
-                <v-text-field v-model="categoria.tipoDocumento.nome" disabled></v-text-field>
-              </v-flex>
-              <v-flex xs1>
-                <v-btn flat icon color="primary" @click.stop="tipoDocumentos = !tipoDocumentos">
-                  <v-icon>search</v-icon>
-                </v-btn>
+                <v-text-field label="Nome" v-model="categoria.nome" :rules="regrasValidacao.nome" required></v-text-field>
               </v-flex>
 
               <v-flex xs12>
@@ -68,24 +56,6 @@
           </v-container>
         </v-card>
       </v-dialog>
-
-      <v-dialog v-model="tipoDocumentos" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Tipo de Documentos
-          </v-card-title>
-          <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstTipoDocumento.headers" :items="lstTipoDocumento.items" hide-actions item-key="name">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionarTipoDocumento(props.item)">
-                  <td>{{ props.item.codigo }}</td>
-                  <td>{{ props.item.nome }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-          </v-container>
-        </v-card>
-      </v-dialog>
     </v-app>
   </div>
 </template>
@@ -103,48 +73,17 @@ export default {
     return {
       valid: true,
       categorias: false,
-      tipoDocumentos: false,
       categoria: {
         codigo: '',
         nome: '',
-        tipoDocumento: {
-          codigo: '',
-          nome: ''
-        },
         situacao: null
       },
       regrasValidacao: {
         nome: [
           v => !!v || 'Nome é obrigatório'
         ],
-        tipoDocumento: [
-          v => !!v || 'Tipo de Documento é obrigatório'
-        ],
         situacao: [
           v => !!v || 'Situação é obrigatório'
-        ]
-      },
-      lstTipoDocumento: {
-        headers: [
-          { text: 'Código', value: 'codigo' },
-          { text: 'Nome', value: 'nome' }
-        ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            nome: 'Secretaria'
-          },
-          {
-            value: false,
-            codigo: 2,
-            nome: 'Tesouraria'
-          },
-          {
-            value: false,
-            codigo: 3,
-            nome: 'Projetos'
-          }
         ]
       },
       lstCategoria: {
@@ -158,80 +97,48 @@ export default {
             value: false,
             codigo: 1,
             nome: 'Secretaria',
-            tipoDocumento: {
-              codigo: '1',
-              nome: 'Secretaria'
-            },
             situacao: 'Ativo'
           },
           {
             value: false,
             codigo: 2,
             nome: 'Tesouraria',
-            tipoDocumento: {
-              codigo: '2',
-              nome: 'Tesouraria'
-            },
             situacao: 'Ativo'
           },
           {
             value: false,
             codigo: 3,
             nome: 'Internos',
-            tipoDocumento: {
-              codigo: '3',
-              nome: 'Projetos'
-            },
             situacao: 'Ativo'
           },
           {
             value: false,
             codigo: 4,
             nome: 'Comunidade',
-            tipoDocumento: {
-              codigo: '3',
-              nome: 'Projetos'
-            },
             situacao: 'Ativo'
           },
           {
             value: false,
             codigo: 5,
             nome: 'Profissionais',
-            tipoDocumento: {
-              codigo: '3',
-              nome: 'Projetos'
-            },
             situacao: 'Ativo'
           },
           {
             value: false,
             codigo: 6,
             nome: 'Internacionais',
-            tipoDocumento: {
-              codigo: '3',
-              nome: 'Projetos'
-            },
             situacao: 'Ativo'
           },
           {
             value: false,
             codigo: 7,
             nome: 'Imagem Pública',
-            tipoDocumento: {
-              codigo: '3',
-              nome: 'Projetos'
-            },
             situacao: 'Ativo'
           },
           {
             value: false,
             codigo: 8,
             nome: 'Demais Comissões',
-            tipoDocumento: {
-              codigo: '3',
-              nome: 'Projetos'
-            },
             situacao: 'Ativo'
           }
         ]
@@ -258,10 +165,6 @@ export default {
     },
     limpar () {
       this.$refs.form.reset()
-    },
-    selecionarTipoDocumento (item) {
-      this.tipoDocumentos = false
-      this.categoria.tipoDocumento = item
     },
     selecionarCategoria (item) {
       this.categorias = false

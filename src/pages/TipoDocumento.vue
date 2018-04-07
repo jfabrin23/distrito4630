@@ -21,7 +21,11 @@
                 </v-btn>
               </v-flex>
               <v-flex xs12>
-                <v-text-field label="Name" v-model="tipoDocumento.nome" :rules="regrasValidacao.nome" required></v-text-field>
+                <v-text-field label="Nome" v-model="tipoDocumento.nome" :rules="regrasValidacao.nome" required></v-text-field>
+              </v-flex>
+
+              <v-flex xs12>
+                <v-checkbox label="Mês Ref." v-model="mesRef" :error-messages="checkboxErrors" @change="$v.mesRef.$touch()" @blur="$v.mesRef.$touch()" required></v-checkbox>
               </v-flex>
 
               <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
@@ -64,13 +68,22 @@ export default {
     Cabecalho,
     Rodape
   },
+  computed: {
+    checkboxErrors () {
+      const errors = []
+      if (!this.$v.mesRef.$dirty) return errors
+      !this.$v.mesRef.required && errors.push('You must agree to continue!')
+      return errors
+    }
+  },
   data () {
     return {
       valid: true,
       tipoDocumentos: false,
       tipoDocumento: {
         codigo: '',
-        nome: ''
+        nome: '',
+        mesRef: false
       },
       regrasValidacao: {
         nome: [
@@ -86,16 +99,11 @@ export default {
           {
             value: false,
             codigo: 1,
-            nome: 'Secretaria'
+            nome: 'Relatório'
           },
           {
             value: false,
             codigo: 2,
-            nome: 'Tesouraria'
-          },
-          {
-            value: false,
-            codigo: 3,
             nome: 'Projetos'
           }
         ]

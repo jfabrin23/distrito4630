@@ -4,6 +4,8 @@ import Vue from 'vue'
 import App from './App'
 import router from './router'
 import Vuetify from 'vuetify'
+import axios from 'axios'
+import VueAxios from 'vue-axios'
 import colors from 'vuetify/es5/util/colors'
 
 import 'vuetify/dist/vuetify.min.css'
@@ -13,9 +15,10 @@ Vue.use(Vuetify, {
     primary: '#D81B5D',
     secondary: colors.grey.darken1,
     accent: colors.indigo.accent1,
-    modal: colors.red.lighten2
+    modal: '#D81B5D'
   }
 })
+Vue.use(VueAxios, axios)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
