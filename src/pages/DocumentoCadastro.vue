@@ -10,10 +10,13 @@
           <h1>Cadastro de Documento</h1>
           <hr />
 
+          <v-alert :type="mensagem.tipo" :value="true" v-if="mensagem.mostrar">
+            {{mensagem.texto}}
+          </v-alert>
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-layout row wrap>
               <v-flex xs3>
-                <v-text-field label="Código" v-model="documento.codigo" disabled></v-text-field>
+                <v-text-field label="Código" v-model="documento.id" disabled></v-text-field>
               </v-flex>
               <v-flex xs9>
                 <v-btn flat icon color="primary" @click.stop="documentos = !documentos">
@@ -22,32 +25,32 @@
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Clube" v-model="documento.clube.codigo" :rules="regrasValidacao.clube" disabled></v-text-field>
+                <v-text-field label="Clube" v-model="documento.clube.id" :rules="regrasValidacao.clube" disabled></v-text-field>
               </v-flex>
               <v-flex xs9 pl-3>
                 <v-text-field v-model="documento.clube.nome" disabled></v-text-field>
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Tipo Documento" v-model="documento.tipo.codigo" :rules="regrasValidacao.tipo" disabled></v-text-field>
+                <v-text-field label="Tipo Documento" v-model="documento.tipoDocumento_id" :rules="regrasValidacao.tipo" disabled></v-text-field>
               </v-flex>
               <v-flex xs8 pl-3>
-                <v-text-field v-model="documento.tipo.nome" disabled></v-text-field>
+                <v-text-field v-model="documento.tipoDocumento.nome" disabled></v-text-field>
               </v-flex>
               <v-flex xs1>
-                <v-btn flat icon color="primary" @click.stop="tipos = !tipos">
+                <v-btn flat icon color="primary" @click.stop="buscarTipoDocumento">
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Categoria" v-model="documento.categoria.codigo" :rules="regrasValidacao.categoria" disabled></v-text-field>
+                <v-text-field label="Categoria" v-model="documento.categoria_id" :rules="regrasValidacao.categoria" disabled></v-text-field>
               </v-flex>
               <v-flex xs8 pl-3>
                 <v-text-field v-model="documento.categoria.nome" disabled></v-text-field>
               </v-flex>
               <v-flex xs1>
-                <v-btn flat icon color="primary" @click.stop="categorias = !categorias">
+                <v-btn flat icon color="primary" @click.stop="buscarCategoria">
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
@@ -79,7 +82,7 @@
             <v-data-table :headers="lstDocumentos.headers" :items="lstDocumentos.items" hide-actions item-key="name">
               <template slot="items" slot-scope="props">
                 <tr @click="selecionarDocumento(props.item)">
-                  <td>{{ props.item.codigo }}</td>
+                  <td>{{ props.item.id }}</td>
                   <td>{{ props.item.clube.nome }}</td>
                   <td>{{ props.item.categoria }}</td>
                   <td>{{ props.item.mesRef }}</td>
@@ -91,23 +94,59 @@
         </v-card>
       </v-dialog>
 
-      <v-dialog v-model="tipos" width="800px">
-      <v-card>
-        <v-card-title class="modal py-4 title">
-          Lista de Tipo de Documentos
-        </v-card-title>
-        <v-container grid-list-sm class="pa-4">
-          <v-data-table :headers="lstTipoDocumento.headers" :items="lstTipoDocumento.items" hide-actions item-key="name">
-            <template slot="items" slot-scope="props">
-              <tr @click="selecionarTipo(props.item)">
-                <td>{{ props.item.codigo }}</td>
-                <td>{{ props.item.nome }}</td>
-              </tr>
-            </template>
-          </v-data-table>
-        </v-container>
-      </v-card>
-    </v-dialog>
+      <v-dialog v-model="tipoDocumentos" width="800px">
+        <v-card>
+          <v-card-title class="modal py-4 title">
+            Lista de Tipo de Documentos
+          </v-card-title>
+
+          <v-container grid-list-sm class="pa-4">
+            <v-layout row wrap>
+              <v-flex xs12>
+                <v-text-field label="Buscar" v-model="searchTipoDocumento"></v-text-field>
+              </v-flex>
+            </v-layout>
+            <v-data-table :headers="lstTipoDocumento.headers" :items="lstTipoDocumento.items" hide-actions item-key="name" :search="searchTipoDocumento" v-if="!lstTipoDocumento.erro.mostrar">
+              <template slot="items" slot-scope="props">
+                <tr @click="selecionarTipoDocumento(props.item)">
+                  <td>{{ props.item.id }}</td>
+                  <td>{{ props.item.nome }}</td>
+                </tr>
+              </template>
+            </v-data-table>
+            <v-alert :type="lstTipoDocumento.erro.tipo" :value="true" v-if="lstTipoDocumento.erro.mostrar">
+              {{lstTipoDocumento.error.texto}}
+            </v-alert>
+          </v-container>
+        </v-card>
+      </v-dialog>
+
+      <v-dialog v-model="categorias" width="800px">
+        <v-card>
+          <v-card-title class="modal py-4 title">
+            Lista de Categorias
+          </v-card-title>
+          <v-container grid-list-sm class="pa-4">
+            <v-layout row wrap>
+              <v-flex xs12>
+                <v-text-field label="Buscar" v-model="searchCategoria"></v-text-field>
+              </v-flex>
+            </v-layout>
+            <v-data-table :headers="lstCategoria.headers" :items="lstCategoria.items" hide-actions item-key="name" :search="searchCategoria" v-if="!lstCategoria.erro.mostrar">
+              <template slot="items" slot-scope="props">
+                <tr @click="selecionarCategoria(props.item)">
+                  <td>{{ props.item.id }}</td>
+                  <td>{{ props.item.nome }}</td>
+                  <td>{{ props.item.situacao | situacao }}</td>
+                </tr>
+              </template>
+            </v-data-table>
+            <v-alert :type="lstCategoria.erro.tipo" :value="true" v-if="lstCategoria.erro.mostrar">
+              {{lstCategoria.error.texto}}
+            </v-alert>
+          </v-container>
+        </v-card>
+      </v-dialog>
 
       <v-dialog v-model="anexos" width="800px">
         <v-card>
@@ -166,24 +205,40 @@ export default {
     return {
       valid: true,
       valid2: true,
+      searchTipoDocumento: '',
+      searchCategoria: '',
+      mensagem: {
+        tipo: '',
+        texto: '',
+        mostrar: false
+      },
       documentos: false,
-      tipos: false,
+      tipoDocumentos: false,
       categorias: false,
       anexos: false,
       habilita: false,
       mask: '##/####',
       documento: {
-        codigo: '',
+        id: '',
         usuario: {
-          codigo: '',
+          id: '',
           nome: ''
         },
+        clube_id: '',
         clube: {
-          codigo: '',
+          id: '',
           nome: ''
         },
-        tipo: '',
-        categoria: '',
+        tipoDocumento_id: '',
+        tipoDocumento: {
+          id: '',
+          nome: ''
+        },
+        categoria_id: '',
+        categoria: {
+          id: '',
+          nome: ''
+        },
         mefRef: '',
         observacao: '',
         dataEnvio: new Date(),
@@ -215,135 +270,66 @@ export default {
           v => !!v || 'Descrição é obrigatório'
         ]
       },
-      cbb: {
-        tipo: [ 'Relatório', 'Projeto' ],
-        categoria: [ 'Secretaria', 'Tesouraria', 'Internos', 'Internacionais' ]
-      },
       lstDocumentos: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
           { text: 'Clube', value: 'clube' },
           { text: 'Categoria', value: 'categoria' },
           { text: 'Mês Ref.', value: 'mesRef' },
           { text: 'Data Envio', value: 'dataEnvio' }
         ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            clube: {
-              codigo: 1,
-              nome: 'Rotaract Club de Cruzeiro do Oeste'
-            },
-            categoria: 'Secretaria',
-            mesRef: '01/2018',
-            dataEncio: '02/01/2018'
-          },
-          {
-            value: false,
-            codigo: 2,
-            clube: {
-              codigo: 1,
-              nome: 'Rotaract Club de Cruzeiro do Oeste'
-            },
-            categoria: 'Tesouraria',
-            mesRef: '01/2018',
-            dataEncio: '15/01/2018'
-          },
-          {
-            value: false,
-            codigo: 3,
-            clube: {
-              codigo: 2,
-              nome: 'Rotaract Club de Cianorte'
-            },
-            categoria: 'Secretaria',
-            mesRef: '01/2018',
-            dataEncio: '01/02/2018'
-          },
-          {
-            value: false,
-            codigo: 4,
-            clube: {
-              codigo: 2,
-              nome: 'Rotaract Club de Cianorte'
-            },
-            categoria: 'Tesouraria',
-            mesRef: '01/2018',
-            dataEncio: '02/01/2018'
-          },
-          {
-            value: false,
-            codigo: 5,
-            clube: {
-              codigo: 4,
-              nome: 'Rotaract Club de Goioerê'
-            },
-            categoria: 'Internos',
-            mesRef: '',
-            dataEncio: '03/03/2018'
-          },
-          {
-            value: false,
-            codigo: 6,
-            clube: {
-              codigo: 3,
-              nome: 'Rotaract Club de Umuarama'
-            },
-            categoria: 'Profissionais',
-            mesRef: '',
-            dataEncio: '06/04/2018'
-          },
-          {
-            value: false,
-            codigo: 7,
-            clube: {
-              codigo: 5,
-              nome: 'Rotaract Club de Paranavaí'
-            },
-            categoria: 'Secretaria',
-            mesRef: '01/2018',
-            dataEncio: '06/01/2018'
-          }
-        ]
+        items: [],
+        erro: {
+          tipo: '',
+          texto: '',
+          mostrar: false
+        }
       },
       lstTipoDocumento: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
           { text: 'Nome', value: 'nome' }
         ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            nome: 'Relatório'
-          },
-          {
-            value: false,
-            codigo: 2,
-            nome: 'Projetos'
-          }
-        ]
+        items: [],
+        erro: {
+          tipo: '',
+          texto: '',
+          mostrar: false
+        }
+      },
+      lstCategoria: {
+        headers: [
+          { text: 'Código', value: 'id' },
+          { text: 'Nome', value: 'nome' },
+          { text: 'Situação', value: 'situacao' }
+        ],
+        items: [],
+        erro: {
+          tipo: '',
+          texto: '',
+          mostrar: false
+        }
       },
       tblAnexo: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
           { text: 'Descrição', value: 'descricao' },
           { text: 'Opção', value: 'opcao' }
         ],
-        items: [
-          {
-            value: false,
-            numero: 1,
-            descricao: 'Relatório da Tesouraria'
-          },
-          {
-            value: false,
-            numero: 2,
-            descricao: 'Comprovante de Depósito'
-          }
-        ]
+        items: []
       }
+    }
+  },
+  filters: {
+    situacao (situacao) {
+      if (!situacao) return ''
+      let retorno = ''
+      if (situacao === '0') {
+        retorno = 'Inativo'
+      } else {
+        retorno = 'Ativo'
+      }
+      return retorno
     }
   },
   methods: {
@@ -363,9 +349,15 @@ export default {
       this.documentos = false
       this.documento = item
     },
-    selecionarTipo (item) {
-      this.tipos = false
-      this.documento.tipo = item
+    selecionarTipoDocumento (item) {
+      this.tipoDocumentos = false
+      this.documento.tipoDocumento_id = item.id
+      this.documento.tipoDocumento = item
+    },
+    selecionarCategoria (item) {
+      this.categorias = false
+      this.documento.categoria_id = item.id
+      this.documento.categoria = item
     },
     limpar () {
       this.desabilita = false
@@ -378,6 +370,48 @@ export default {
     removeTipoDocumento (item) {
       this.filtro.tipoDocumento.splice(this.filtro.tipoDocumento.indexOf(item), 1)
       this.filtro.tipoDocumento = [this.filtro.tipoDocumento]
+    },
+    buscarTipoDocumento () {
+      this
+        .axios
+        .get('tipodocumento')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+
+          this.lstTipoDocumento.items = lstItems
+          this.lstTipoDocumento.erro = { mostrar: false, texto: '', type: '' }
+          this.tipoDocumentos = true
+        })
+        .catch((error) => {
+          this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
+        })
+    },
+    buscarCategoria () {
+      this
+        .axios
+        .get('categoria')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+
+          this.lstCategoria.items = lstItems
+          this.lstCategoria.erro = { mostrar: false, texto: '', type: '' }
+          this.categorias = true
+        })
+        .catch((error) => {
+          this.lstCategoria.erro = { mostrar: true, texto: error, type: 'error' }
+        })
     }
   }
 }

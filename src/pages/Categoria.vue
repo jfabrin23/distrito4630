@@ -10,13 +10,16 @@
           <h1>Cadastro de Categoria</h1>
           <hr />
 
+          <v-alert :type="mensagem.tipo" :value="true" v-if="mensagem.mostrar">
+            {{mensagem.texto}}
+          </v-alert>
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-layout row wrap>
               <v-flex xs3>
-                <v-text-field label="Código" v-model="categoria.codigo" disabled></v-text-field>
+                <v-text-field label="Código" v-model="categoria.id" disabled></v-text-field>
               </v-flex>
               <v-flex xs9>
-                <v-btn flat icon color="primary" @click.stop="categorias = !categorias">
+                <v-btn flat icon color="primary" @click="buscarCategoria">
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
@@ -44,15 +47,23 @@
             Lista de Categorias
           </v-card-title>
           <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstCategoria.headers" :items="lstCategoria.items" hide-actions item-key="name">
+            <v-layout row wrap>
+              <v-flex xs12>
+                <v-text-field label="Buscar" v-model="searchCategoria"></v-text-field>
+              </v-flex>
+            </v-layout>
+            <v-data-table :headers="lstCategoria.headers" :items="lstCategoria.items" hide-actions item-key="name" :search="searchCategoria" v-if="!lstCategoria.erro.mostrar">
               <template slot="items" slot-scope="props">
                 <tr @click="selecionarCategoria(props.item)">
-                  <td>{{ props.item.codigo }}</td>
+                  <td>{{ props.item.id }}</td>
                   <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.situacao }}</td>
+                  <td>{{ props.item.situacao | situacao }}</td>
                 </tr>
               </template>
             </v-data-table>
+            <v-alert :type="lstCategoria.erro.tipo" :value="true" v-if="lstCategoria.erro.mostrar">
+              {{lstCategoria.error.texto}}
+            </v-alert>
           </v-container>
         </v-card>
       </v-dialog>
@@ -73,8 +84,14 @@ export default {
     return {
       valid: true,
       categorias: false,
+      searchCategoria: '',
+      mensagem: {
+        tipo: '',
+        texto: '',
+        mostrar: false
+      },
       categoria: {
-        codigo: '',
+        id: '',
         nome: '',
         situacao: null
       },
@@ -88,79 +105,79 @@ export default {
       },
       lstCategoria: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
           { text: 'Nome', value: 'nome' },
           { text: 'Situação', value: 'situacao' }
         ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            nome: 'Secretaria',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 2,
-            nome: 'Tesouraria',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 3,
-            nome: 'Internos',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 4,
-            nome: 'Comunidade',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 5,
-            nome: 'Profissionais',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 6,
-            nome: 'Internacionais',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 7,
-            nome: 'Imagem Pública',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 8,
-            nome: 'Demais Comissões',
-            situacao: 'Ativo'
-          }
-        ]
+        items: [],
+        erro: {
+          tipo: '',
+          texto: '',
+          mostrar: false
+        }
       },
       cbb: {
         situacao: [
-          'Ativo',
-          'Inativo'
+          { value: '1', text: 'Ativo' },
+          { value: '0', text: 'Inativo' }
         ]
       }
+    }
+  },
+  filters: {
+    situacao (situacao) {
+      if (!situacao) return ''
+      let retorno = ''
+      if (situacao === '0') {
+        retorno = 'Inativo'
+      } else {
+        retorno = 'Ativo'
+      }
+      return retorno
     }
   },
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
-        // Native form submission is not yet supported
-        /* axios.post('/api/submit', {
-          name: this.name,
-          email: this.email,
-          select: this.select,
-          checkbox: this.checkbox
-        }) */
+        if (this.categoria.id) {
+          this
+            .axios
+            .put('categoria/' + this.categoria.id, this.categoria)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        } else {
+          this
+            .axios
+            .post('categoria', this.categoria)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        }
       }
     },
     limpar () {
@@ -169,6 +186,27 @@ export default {
     selecionarCategoria (item) {
       this.categorias = false
       this.categoria = item
+    },
+    buscarCategoria () {
+      this
+        .axios
+        .get('categoria')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+
+          this.lstCategoria.items = lstItems
+          this.lstCategoria.erro = { mostrar: false, texto: '', type: '' }
+          this.categorias = true
+        })
+        .catch((error) => {
+          this.lstCategoria.erro = { mostrar: true, texto: error, type: 'error' }
+        })
     }
   }
 }

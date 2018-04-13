@@ -200,8 +200,10 @@ export default {
         .then((retorno) => {
           let lstItems = []
           for (var item in retorno.data.data) {
-            let registro = retorno.data.data[item]
-            lstItems.push(registro)
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
           }
 
           this.lstClube.items = lstItems
