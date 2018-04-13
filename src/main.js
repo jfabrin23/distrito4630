@@ -10,6 +10,8 @@ import colors from 'vuetify/es5/util/colors'
 
 import 'vuetify/dist/vuetify.min.css'
 
+axios.defaults.baseURL = 'http://www.rotaract4630.com.br/rac4630/public/api/'
+
 Vue.use(Vuetify, {
   theme: {
     primary: '#D81B5D',

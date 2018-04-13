@@ -10,13 +10,16 @@
           <h1>Cadastro de Usuário</h1>
           <hr />
 
+          <v-alert :type="mensagem.tipo" :value="true" v-if="mensagem.mostrar">
+            {{mensagem.texto}}
+          </v-alert>
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-layout row wrap>
               <v-flex xs3>
-                <v-text-field label="Código" v-model="usuario.codigo" disabled></v-text-field>
+                <v-text-field label="Código" v-model="usuario.id" disabled></v-text-field>
               </v-flex>
               <v-flex xs9>
-                <v-btn flat icon color="primary" @click.stop="usuarios = !usuarios">
+                <v-btn flat icon color="primary" @click="buscarUsuario">
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
@@ -26,13 +29,13 @@
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Clube" v-model="usuario.clube.codigo" :rules="regrasValidacao.clube" disabled></v-text-field>
+                <v-text-field label="Clube" v-model="usuario.clube_id" :rules="regrasValidacao.clube" disabled></v-text-field>
               </v-flex>
               <v-flex xs8 pl-3>
                 <v-text-field v-model="usuario.clube.nome" disabled></v-text-field>
               </v-flex>
               <v-flex xs1>
-                <v-btn flat icon color="primary" @click.stop="clubes = !clubes">
+                <v-btn flat icon color="primary" @click.stop="buscarClube">
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
@@ -42,7 +45,7 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field label="Senha" v-model="usuario.senha" counter :rules="!usuario.codigo ? regrasValidacao.senha : ''" :required="!usuario.codigo" :append-icon="e1 ? 'visibility' : 'visibility_off'" :append-icon-cb="() => (e1 = !e1)" :type="e1 ? 'password' : 'text'" :disabled="usuario.codigo ? true : false"></v-text-field>
+                <v-text-field label="Senha" v-model="usuario.senha" counter :rules="!usuario.id ? regrasValidacao.senha : ''" :required="!usuario.id" :append-icon="e1 ? 'visibility' : 'visibility_off'" :append-icon-cb="() => (e1 = !e1)" :type="e1 ? 'password' : 'text'" :disabled="usuario.id ? true : false"></v-text-field>
               </v-flex>
 
               <v-flex xs12>
@@ -65,19 +68,28 @@
       <!-- Modal Usuários -->
       <v-dialog v-model="usuarios" width="800px">
         <v-card>
-          <v-card-title class="grey lighten-4 py-4 title">
+          <v-card-title class="modal py-4 title">
             Lista de Usuários
           </v-card-title>
+
           <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstUsuario.headers" :items="lstUsuario.items" hide-actions item-key="name">
+            <v-layout row wrap>
+              <v-flex xs12>
+                <v-text-field label="Buscar" v-model="searchUsuario"></v-text-field>
+              </v-flex>
+            </v-layout>
+            <v-data-table :headers="lstUsuario.headers" :items="lstUsuario.items" hide-actions item-key="name" :search="searchUsuario" v-if="!lstUsuario.erro.mostrar">
               <template slot="items" slot-scope="props">
                 <tr @click="selecionarUsuario(props.item)">
-                  <td>{{ props.item.codigo }}</td>
+                  <td>{{ props.item.id }}</td>
                   <td>{{ props.item.nome }}</td>
                   <td>{{ props.item.clube.nome }}</td>
                 </tr>
               </template>
             </v-data-table>
+            <v-alert :type="lstUsuario.erro.tipo" :value="true" v-if="lstUsuario.erro.mostrar">
+              {{lstUsuario.error.texto}}
+            </v-alert>
           </v-container>
         </v-card>
       </v-dialog>
@@ -85,19 +97,28 @@
       <!-- Modal Clubes -->
       <v-dialog v-model="clubes" width="800px">
         <v-card>
-          <v-card-title class="grey lighten-4 py-4 title">
+          <v-card-title class="modal py-4 title">
             Lista de Clubes
           </v-card-title>
+
           <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstClube.headers" :items="lstClube.items" hide-actions item-key="name">
+            <v-layout row wrap>
+              <v-flex xs12>
+                <v-text-field label="Buscar" v-model="searchClube"></v-text-field>
+              </v-flex>
+            </v-layout>
+            <v-data-table :headers="lstClube.headers" :items="lstClube.items" :search="searchClube" hide-actions item-key="id" v-if="!lstClube.erro.mostrar">
               <template slot="items" slot-scope="props">
-                <tr @click="selecionarClube(props.item)">
-                  <td>{{ props.item.codigo }}</td>
+                <tr @click="selecionar(props.item)">
+                  <td>{{ props.item.id }}</td>
                   <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.situacao }}</td>
+                  <td>{{ props.item.situacao | situacao}}</td>
                 </tr>
               </template>
             </v-data-table>
+            <v-alert :type="lstClube.erro.tipo" :value="true" v-if="lstClube.erro.mostrar">
+              {{lstClube.error.texto}}
+            </v-alert>
           </v-container>
         </v-card>
       </v-dialog>
@@ -119,10 +140,17 @@ export default {
     return {
       e1: true,
       valid: true,
+      searchClube: '',
+      searchUsuario: '',
+      mensagem: {
+        tipo: '',
+        texto: '',
+        mostrar: false
+      },
       usuarios: false,
       clubes: false,
       usuario: {
-        codigo: '',
+        id: '',
         nome: '',
         clube: {
           código: '',
@@ -156,155 +184,157 @@ export default {
       },
       cbb: {
         situacao: [
-          'Ativo',
-          'Inativo'
+          { value: '1', text: 'Ativo' },
+          { value: '0', text: 'Inativo' }
         ],
         tipo: [
-          'Admin',
-          'Secretário',
-          'Tesoureiro',
-          'Projetos'
+          { value: '1', text: 'Admin' },
+          { value: '2', text: 'Secretário' },
+          { value: '3', text: 'Tesoureiro' },
+          { value: '4', text: 'Projetos' },
+          { value: '5', text: 'Presidente' }
         ]
       },
       lstClube: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
           { text: 'Nome', value: 'nome' },
           { text: 'Situação', value: 'situacao' }
         ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            nome: 'Rotaract Club de Cruzeiro do Oeste',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 2,
-            nome: 'Rotaract Club de Cianorte',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 3,
-            nome: 'Rotaract Club de Umuarama',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 4,
-            nome: 'Rotaract Club de Goioerê',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 5,
-            nome: 'Rotaract Club de Paranavaí',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 6,
-            nome: 'Rotaract Club de Maringa Interação',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 7,
-            nome: 'Rotaract Club de Maringá Cidade Canção',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 8,
-            nome: 'Rotaract Club de A',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 9,
-            nome: 'Rotaract Club de B',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 10,
-            nome: 'Rotaract Club de C',
-            situacao: 'Ativo'
-          }
-        ]
+        items: [],
+        erro: {
+          mostrar: false,
+          texto: '',
+          type: ''
+        }
       },
       lstUsuario: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
           { text: 'Nome', value: 'nome' },
           { text: 'Clube', value: 'clube' }
         ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            nome: 'Johny Alves Fabrin',
-            clube: {
-              codigo: 2,
-              nome: 'Rotaract Club de Cianorte'
-            },
-            login: 'jfabrin',
-            tipo: 'Admin',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 2,
-            nome: 'Diego Rafael Fachin',
-            clube: {
-              codigo: 2,
-              nome: 'Rotaract Club de Cianorte'
-            },
-            login: 'jfabrin',
-            tipo: 'Admin',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 3,
-            nome: 'Paulo Celso de Brito Jr',
-            clube: {
-              codigo: 4,
-              nome: 'Rotaract Club de Goioerê'
-            },
-            login: 'jfabrin',
-            tipo: 'Tesoureiro',
-            situacao: 'Ativo'
-          }
-        ]
+        items: [],
+        erro: {
+          mostrar: false,
+          texto: '',
+          type: ''
+        }
       }
+    }
+  },
+  filters: {
+    situacao (situacao) {
+      if (!situacao) return ''
+      let retorno = ''
+      if (situacao === '0') {
+        retorno = 'Inativo'
+      } else {
+        retorno = 'Ativo'
+      }
+      return retorno
     }
   },
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
-        // Native form submission is not yet supported
-        /* axios.post('/api/submit', {
-          name: this.name,
-          email: this.email,
-          select: this.select,
-          checkbox: this.checkbox
-        }) */
+        if (this.usuario.id) {
+          this
+            .axios
+            .put('usuario/' + this.usuario.id, this.usuario)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        } else {
+          this
+            .axios
+            .post('usuario', this.usuario)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        }
       }
     },
     limpar () {
       this.$refs.form.reset()
+      this.mensagem = {
+        tipo: '',
+        texto: '',
+        mostrar: false
+      }
     },
     selecionarClube (item) {
       this.clubes = false
-      this.usuario.clube.codigo = item.codigo
+      this.usuario.clube_id = item.id
       this.usuario.clube.nome = item.nome
     },
     selecionarUsuario (item) {
       this.usuarios = false
       this.usuario = item
+    },
+    buscarClube () {
+      this
+        .axios
+        .get('clube')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            let registro = retorno.data.data[item]
+            lstItems.push(registro)
+          }
+
+          this.lstClube.items = lstItems
+          this.lstClube.erro = { mostrar: false, texto: '', type: '' }
+          this.clubes = true
+        })
+        .catch((error) => {
+          this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
+        })
+    },
+    buscarUsuario () {
+      this
+        .axios
+        .get('usuario')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+
+          this.lstUsuario.items = lstItems
+          this.lstUsuario.erro = { mostrar: false, texto: '', type: '' }
+          this.usuarios = true
+        })
+        .catch((error) => {
+          this.lstUsuario.erro = { mostrar: true, texto: error, type: 'error' }
+        })
     }
   }
 }

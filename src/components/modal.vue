@@ -1,9 +1,9 @@
 <template>
   <div class="Footer">
-    <v-dialog v-model="tipoDocumentos" width="800px">
+    <v-dialog v-model="modal" width="800px">
       <v-card>
         <v-card-title class="modal py-4 title">
-          Lista de Tipo de Documentos
+          {{titulo}}
         </v-card-title>
         <v-container grid-list-sm class="pa-4">
           <v-data-table :headers="lstTipoDocumento.headers" :items="lstTipoDocumento.items" hide-actions item-key="name">
@@ -22,9 +22,11 @@
 
 <script>
 export default {
-  name: 'Footer',
+  name: 'Modal',
   data () {
     return {
+      titulo: '',
+      modal: ''
     }
   },
   methods: {

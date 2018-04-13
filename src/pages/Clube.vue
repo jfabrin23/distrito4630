@@ -10,13 +10,16 @@
           <h1>Cadastro de Clube</h1>
           <hr />
 
+          <v-alert :type="mensagem.tipo" :value="true" v-if="mensagem.mostrar">
+            {{mensagem.texto}}
+          </v-alert>
           <v-form v-model="valid" ref="form" lazy-validation>
             <v-layout row wrap>
               <v-flex xs3>
-                <v-text-field label="Código" v-model="clube.codigo" disabled></v-text-field>
+                <v-text-field label="Código" v-model="clube.id" disabled></v-text-field>
               </v-flex>
               <v-flex xs9>
-                <v-btn flat icon color="primary" @click.stop="clubes = !clubes">
+                <v-btn flat icon color="primary" @click="buscarClube">
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
@@ -36,21 +39,31 @@
 
       <Rodape />
 
+      <!-- Modal Clube -->
       <v-dialog v-model="clubes" width="800px">
         <v-card>
           <v-card-title class="modal py-4 title">
             Lista de Clubes
           </v-card-title>
+
           <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstClube.headers" :items="lstClube.items" hide-actions item-key="name">
+            <v-layout row wrap>
+              <v-flex xs12>
+                <v-text-field label="Buscar" v-model="search"></v-text-field>
+              </v-flex>
+            </v-layout>
+            <v-data-table :headers="lstClube.headers" :items="lstClube.items" :search="search" hide-actions item-key="id" v-if="!lstClube.erro.mostrar">
               <template slot="items" slot-scope="props">
                 <tr @click="selecionar(props.item)">
-                  <td>{{ props.item.codigo }}</td>
+                  <td>{{ props.item.id }}</td>
                   <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.situacao }}</td>
+                  <td>{{ props.item.situacao | situacao}}</td>
                 </tr>
               </template>
             </v-data-table>
+            <v-alert :type="lstClube.erro.tipo" :value="true" v-if="lstClube.erro.mostrar">
+              {{lstClube.error.texto}}
+            </v-alert>
           </v-container>
         </v-card>
       </v-dialog>
@@ -61,6 +74,7 @@
 <script>
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
+
 export default {
   name: 'Clube',
   components: {
@@ -70,9 +84,15 @@ export default {
   data () {
     return {
       valid: true,
+      search: '',
       clubes: false,
+      mensagem: {
+        tipo: '',
+        texto: '',
+        mostrar: false
+      },
       clube: {
-        codigo: '',
+        id: '',
         nome: '',
         situacao: null
       },
@@ -81,98 +101,116 @@ export default {
           v => !!v || 'Nome é obrigatório'
         ],
         situacao: [
-          v => !!v || 'Situação é obrigatório'
+          v => (v != null) || 'Situação é obrigatório'
         ]
       },
       cbb: {
         situacao: [
-          1,
-          0
+          {value: '1', text: 'Ativo'},
+          {value: '0', text: 'Inativo'}
         ]
       },
       lstClube: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
           { text: 'Nome', value: 'nome' },
           { text: 'Situação', value: 'situacao' }
         ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            nome: 'Rotaract Club de Cruzeiro do Oeste',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 2,
-            nome: 'Rotaract Club de Cianorte',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 3,
-            nome: 'Rotaract Club de Umuarama',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 4,
-            nome: 'Rotaract Club de Goioerê',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 5,
-            nome: 'Rotaract Club de Paranavaí',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 6,
-            nome: 'Rotaract Club de Maringa Interação',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 7,
-            nome: 'Rotaract Club de Maringá Cidade Canção',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 8,
-            nome: 'Rotaract Club de A',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 9,
-            nome: 'Rotaract Club de B',
-            situacao: 'Ativo'
-          },
-          {
-            value: false,
-            codigo: 10,
-            nome: 'Rotaract Club de C',
-            situacao: 'Ativo'
-          }
-        ]
+        items: [],
+        erro: {
+          mostrar: false,
+          texto: '',
+          type: ''
+        }
       }
+    }
+  },
+  filters: {
+    situacao (situacao) {
+      if (!situacao) return ''
+      let retorno = ''
+      if (situacao === '0') {
+        retorno = 'Inativo'
+      } else {
+        retorno = 'Ativo'
+      }
+      return retorno
     }
   },
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
-        this.axios.post('http://www.rotaract4630.com.br/rac4630/public/api/clube', this.clube)
+        if (this.clube.id) {
+          this
+            .axios
+            .put('clube/' + this.clube.id, this.clube)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        } else {
+          this
+            .axios
+            .post('clube', this.clube)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        }
       }
     },
     limpar () {
       this.$refs.form.reset()
+      this.mensagem = {
+        tipo: '',
+        texto: '',
+        mostrar: false
+      }
     },
     selecionar (item) {
       this.clubes = false
       this.clube = item
+    },
+    buscarClube () {
+      this
+        .axios
+        .get('clube')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            let registro = retorno.data.data[item]
+            lstItems.push(registro)
+          }
+
+          this.lstClube.items = lstItems
+          this.lstClube.erro = { mostrar: false, texto: '', type: '' }
+          this.clubes = true
+        })
+        .catch((error) => {
+          this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
+        })
     }
   }
 }
