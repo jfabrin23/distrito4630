@@ -6,7 +6,12 @@
 
 <script>
 export default {
-  name: 'app'
+  name: 'app',
+  localStorage: {
+    user: {
+      type: Array
+    }
+  }
 }
 </script>
 

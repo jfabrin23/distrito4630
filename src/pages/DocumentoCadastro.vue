@@ -19,20 +19,20 @@
                 <v-text-field label="Código" v-model="documento.id" disabled></v-text-field>
               </v-flex>
               <v-flex xs9>
-                <v-btn flat icon color="primary" @click.stop="documentos = !documentos">
+                <v-btn flat icon color="primary" @click.stop="buscarDocumento">
                   <v-icon>search</v-icon>
                 </v-btn>
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Clube" v-model="documento.clube.id" :rules="regrasValidacao.clube" disabled></v-text-field>
+                <v-text-field label="Clube" v-model="documento.clube_id" disabled></v-text-field>
               </v-flex>
               <v-flex xs9 pl-3>
                 <v-text-field v-model="documento.clube.nome" disabled></v-text-field>
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Tipo Documento" v-model="documento.tipoDocumento_id" :rules="regrasValidacao.tipo" disabled></v-text-field>
+                <v-text-field label="Tipo Documento" v-model="documento.tipo_documento_id" :rules="regrasValidacao.tipo" disabled></v-text-field>
               </v-flex>
               <v-flex xs8 pl-3>
                 <v-text-field v-model="documento.tipoDocumento.nome" disabled></v-text-field>
@@ -56,7 +56,7 @@
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Mês Rêf." v-model="documento.mesRef" :mask="mask"></v-text-field>
+                <v-text-field label="Mês Rêf." v-model="documento.mes_referencia" :mask="mask"></v-text-field>
               </v-flex>
 
               <v-flex xs12>
@@ -79,14 +79,14 @@
             Lista de Documentos
           </v-card-title>
           <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstDocumentos.headers" :items="lstDocumentos.items" hide-actions item-key="name">
+            <v-data-table :headers="lstDocumento.headers" :items="lstDocumento.items" hide-actions item-key="name">
               <template slot="items" slot-scope="props">
                 <tr @click="selecionarDocumento(props.item)">
                   <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.clube.nome }}</td>
-                  <td>{{ props.item.categoria }}</td>
-                  <td>{{ props.item.mesRef }}</td>
-                  <td>{{ props.item.dataEnvio }}</td>
+                  <td>{{ props.item.usuario.clube_id | clube }}</td>
+                  <td>{{ props.item.categoria.nome }}</td>
+                  <td>{{ props.item.mes_referencia }}</td>
+                  <td>{{ props.item.data_envio }}</td>
                 </tr>
               </template>
             </v-data-table>
@@ -201,6 +201,11 @@ export default {
     Cabecalho,
     Rodape
   },
+  computed: {
+    user () {
+      return this.$localStorage.get('user')[0]
+    }
+  },
   data () {
     return {
       valid: true,
@@ -229,7 +234,7 @@ export default {
           id: '',
           nome: ''
         },
-        tipoDocumento_id: '',
+        tipo_documento_id: '',
         tipoDocumento: {
           id: '',
           nome: ''
@@ -239,10 +244,11 @@ export default {
           id: '',
           nome: ''
         },
-        mefRef: '',
+        mes_referencia: '',
         observacao: '',
-        dataEnvio: new Date(),
-        anexo: ''
+        data_envio: new Date(),
+        anexo: '',
+        situacao: '1'
       },
       anexo: {
         numero: '',
@@ -270,7 +276,7 @@ export default {
           v => !!v || 'Descrição é obrigatório'
         ]
       },
-      lstDocumentos: {
+      lstDocumento: {
         headers: [
           { text: 'Código', value: 'id' },
           { text: 'Clube', value: 'clube' },
@@ -330,28 +336,73 @@ export default {
         retorno = 'Ativo'
       }
       return retorno
+    },
+    clube (clube) {
+      if (!clube) return ''
+      let nome
+      if (clube === 4) {
+        nome = 'Rotaract Club de Goioerê'
+      } else {
+        nome = 'Nome do clube'
+      }
+      return nome
     }
   },
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
-        // Native form submission is not yet supported
-        /* axios.post('/api/submit', {
-          name: this.name,
-          email: this.email,
-          select: this.select,
-          checkbox: this.checkbox
-        }) */
+        this.documento.mes_referencia = '2018-04-01'
+        if (this.documento.id) {
+          this
+            .axios
+            .put('documento/' + this.documento.id, this.documento)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        } else {
+          let data = new Date()
+          this.documento.data_envio = data.getFullYear() + '-' + data.getMonth() + '-' + data.getDate()
+          this
+            .axios
+            .post('documento', this.documento)
+            .then((success) => {
+              this.limpar()
+              this.mensagem = {
+                tipo: 'success',
+                texto: 'Salvo com sucesso!',
+                mostrar: true
+              }
+            })
+            .catch((error) => {
+              this.mensagem = {
+                tipo: 'error',
+                texto: error,
+                mostrar: true
+              }
+            })
+        }
       }
     },
     selecionarDocumento (item) {
       this.habilita = true
-      this.documentos = false
       this.documento = item
+      this.documentos = false
     },
     selecionarTipoDocumento (item) {
       this.tipoDocumentos = false
-      this.documento.tipoDocumento_id = item.id
+      this.documento.tipo_documento_id = item.id
       this.documento.tipoDocumento = item
     },
     selecionarCategoria (item) {
@@ -363,13 +414,25 @@ export default {
       this.desabilita = false
       this.$refs.form.reset()
     },
-    removeCategoria (item) {
-      this.filtro.categoria.splice(this.filtro.categoria.indexOf(item), 1)
-      this.filtro.categoria = [this.filtro.categoria]
-    },
-    removeTipoDocumento (item) {
-      this.filtro.tipoDocumento.splice(this.filtro.tipoDocumento.indexOf(item), 1)
-      this.filtro.tipoDocumento = [this.filtro.tipoDocumento]
+    buscarDocumento () {
+      this
+        .axios
+        .get('documento')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+          this.lstDocumento.items = lstItems
+          this.lstDocumento.erro = { mostrar: false, texto: '', type: '' }
+          this.documentos = true
+        })
+        .catch((error) => {
+          this.lstDocumento.erro = { mostrar: true, texto: error, type: 'error' }
+        })
     },
     buscarTipoDocumento () {
       this
@@ -413,6 +476,13 @@ export default {
           this.lstCategoria.erro = { mostrar: true, texto: error, type: 'error' }
         })
     }
+  },
+  mounted () {
+    this.documento.clube_id = this.user.clube.id
+    this.documento.clube = this.user.clube
+    this.documento.usuario_id = this.user.id
+    this.documento.usuario.id = this.user.id
+    this.documento.usuario.nome = this.user.nome
   }
 }
 </script>

@@ -7,10 +7,11 @@ import Vuetify from 'vuetify'
 import axios from 'axios'
 import VueAxios from 'vue-axios'
 import colors from 'vuetify/es5/util/colors'
+import VueLocalStorage from 'vue-localstorage'
 
 import 'vuetify/dist/vuetify.min.css'
 
-axios.defaults.baseURL = 'https://sistema.rotaract4630.com.br/api/rac4630/public/api/'
+axios.defaults.baseURL = 'https://sistema.rotaract4630.com.br/4630/public/api/'
 
 Vue.use(Vuetify, {
   theme: {
@@ -21,7 +22,10 @@ Vue.use(Vuetify, {
   }
 })
 Vue.use(VueAxios, axios)
+
 Vue.config.productionTip = false
+
+Vue.use(VueLocalStorage)
 
 /* eslint-disable no-new */
 new Vue({

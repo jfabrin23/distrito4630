@@ -35,6 +35,11 @@
 <script>
 export default {
   name: 'login',
+  computed: {
+    user () {
+      return this.$localStorage.get('user')
+    }
+  },
   data () {
     return {
       drawer: null,
@@ -43,6 +48,9 @@ export default {
   },
   methods: {
     entrar () {
+      /* let chablau = this.user
+      chablau.push({ id: 3, nome: 'Paulo Celso de Brito Jr', clube: { id: 4, nome: 'Rotaract Club de Goioerê' }, tipo: 'admin', avatar: '../../static/img/Avatar/avatar.jpg' })
+      this.$localStorage.set('user', chablau) */
       this.$router.push('home')
     }
   },

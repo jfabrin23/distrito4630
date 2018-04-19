@@ -3,17 +3,17 @@
     <v-navigation-drawer fixed :clipped="$vuetify.breakpoint.mdAndUp" app v-model="drawer">
       <v-layout justify-center mt-3 mb-3 class="hidden-sm-and-up">
         <v-avatar>
-          <img :src="usuario.avatar" alt="John" style="margin-right:25px;">
+          <img :src="user.avatar" alt="John" style="margin-right:25px;">
         </v-avatar>
         <span>
-          {{usuario.nome}} <br/>
-          <small>{{usuario.clube.nome}}</small>
+          {{user.nome}} <br/>
+          <small>{{user.clube.nome}}</small>
         </span>
       </v-layout>
       <hr class="hidden-sm-and-up" />
       <v-list dense>
         <template v-for="item in items">
-          <v-list-group v-if="item.children && !item.admin || item.admin && usuario.tipo == 'admin'" v-model="item.model" :key="item.text" :prepend-icon="item.model ? item.icon : item['icon-alt']" append-icon="">
+          <v-list-group v-if="item.children && !item.admin || item.admin && user.tipo == 'admin'" v-model="item.model" :key="item.text" :prepend-icon="item.model ? item.icon : item['icon-alt']" append-icon="">
             <v-list-tile slot="activator">
               <v-list-tile-content>
                 <v-list-tile-title>
@@ -33,7 +33,7 @@
             </v-list-tile>
           </v-list-group>
 
-          <v-list-tile v-else-if="!item.admin || item.admin && usuario.tipo == 'admin'" @click="menu(item.router)" :key="item.text">
+          <v-list-tile v-else-if="!item.admin || item.admin && user.tipo == 'admin'" @click="menu(item.router)" :key="item.text">
             <v-list-tile-action>
               <v-icon>{{ item.icon }}</v-icon>
             </v-list-tile-action>
@@ -57,11 +57,11 @@
       <v-spacer></v-spacer>
 
       <v-avatar class="hidden-sm-and-down">
-        <img :src="usuario.avatar" alt="John" style="margin-right:25px;">
+        <img :src="user.avatar" alt="John" style="margin-right:25px;">
       </v-avatar>
       <span class="hidden-sm-and-down">
-        {{usuario.nome}} <br/>
-        <small>{{usuario.clube.nome}}</small>
+        {{user.nome}} <br/>
+        <small>{{user.clube.nome}}</small>
       </span>
 
     </v-toolbar>
@@ -71,20 +71,16 @@
 <script>
 export default {
   name: 'Header',
+  computed: {
+    user () {
+      return this.$localStorage.get('user')[0]
+    }
+  },
   data () {
     return {
       dialog: false,
       drawer: true,
-      usuario: {
-        codigo: 3,
-        nome: 'Paulo Celso de Brito Jr',
-        clube: {
-          codigo: 4,
-          nome: 'Rotaract Club de Goioerê'
-        },
-        tipo: 'admin',
-        avatar: '../../static/img/Avatar/avatar.jpg'
-      },
+      usuario: {},
       items: [
         { icon: 'home', text: 'Pagina Inicial', router: 'home', admin: false },
         { icon: 'account_balance', text: 'Clube', router: 'clube', admin: false },
@@ -111,6 +107,9 @@ export default {
     menu (menu) {
       this.$router.push(menu)
     }
+  },
+  mounted () {
+    this.usuario = this.user
   },
   props: {
     source: String
