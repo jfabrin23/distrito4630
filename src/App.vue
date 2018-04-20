@@ -9,7 +9,7 @@ export default {
   name: 'app',
   localStorage: {
     user: {
-      type: Array
+      type: Object
     }
   }
 }

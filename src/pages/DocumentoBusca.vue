@@ -18,21 +18,61 @@
               <v-form v-model="valid" ref="form" lazy-validation>
                 <v-layout row wrap>
                   <v-flex xs12>
-                    <v-select v-model="filtro.categoria" label="Categoria" chips tags :items="cbb.categoria">
+                    <v-select label="Categoria" :items="cbb.categoria" v-model="filtro.categoria" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
                       <template slot="selection" slot-scope="data">
-                        <v-chip close @input="removeCategoria(data.item)" :selected="data.selected" >
-                          <strong>{{ data.item }}</strong>&nbsp;
+                        <v-chip close @input="data.parent.selectItem(data.item)" :selected="data.selected" class="chip--select-multi" :key="JSON.stringify(data.item)">
+                          {{ data.item.name }}
                         </v-chip>
+                      </template>
+                      <template slot="item" slot-scope="data">
+                        <template v-if="typeof data.item !== 'object'">
+                          <v-list-tile-content v-text="data.item"></v-list-tile-content>
+                        </template>
+                        <template v-else>
+                          <v-list-tile-content>
+                            <v-list-tile-title v-html="data.item.name"></v-list-tile-title>
+                          </v-list-tile-content>
+                        </template>
                       </template>
                     </v-select>
                   </v-flex>
 
                   <v-flex xs12>
-                    <v-select v-model="filtro.tipoDocumento" label="Tipo de Documento" chips tags :items="cbb.tipoDocumento">
+                    <v-select label="Tipo Documento" :items="cbb.tipoDocumento" v-model="filtro.tipoDocumento" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
                       <template slot="selection" slot-scope="data">
-                        <v-chip close @input="removeTipoDocumento(data.item)" :selected="data.selected" >
-                          <strong>{{ data.item }}</strong>&nbsp;
+                        <v-chip close @input="data.parent.selectItem(data.item)" :selected="data.selected" class="chip--select-multi" :key="JSON.stringify(data.item)">
+                          {{ data.item.name }}
                         </v-chip>
+                      </template>
+                      <template slot="item" slot-scope="data">
+                        <template v-if="typeof data.item !== 'object'">
+                          <v-list-tile-content v-text="data.item"></v-list-tile-content>
+                        </template>
+                        <template v-else>
+                          <v-list-tile-content>
+                            <v-list-tile-title v-html="data.item.name"></v-list-tile-title>
+                          </v-list-tile-content>
+                        </template>
+                      </template>
+                    </v-select>
+                  </v-flex>
+
+                  <v-flex xs12>
+                    <v-select label="Clube" :items="cbb.clube" v-model="filtro.clube" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
+                      <template slot="selection" slot-scope="data">
+                        <v-chip close @input="data.parent.selectItem(data.item)" :selected="data.selected" class="chip--select-multi" :key="JSON.stringify(data.item)">
+                          {{ data.item.name }}
+                        </v-chip>
+                      </template>
+                      <template slot="item" slot-scope="data">
+                        <template v-if="typeof data.item !== 'object'">
+                          <v-list-tile-content v-text="data.item"></v-list-tile-content>
+                        </template>
+                        <template v-else>
+                          <v-list-tile-content>
+                            <v-list-tile-title v-html="data.item.name"></v-list-tile-title>
+                          </v-list-tile-content>
+                        </template>
                       </template>
                     </v-select>
                   </v-flex>
@@ -44,10 +84,11 @@
             </v-container>
           </v-card>
 
-          <v-data-table :headers="tblResultado.headers" :items="tblResultado.items" hide-actions item-key="name" v-if="tabela">
+          <v-data-table :headers="tblResultado.headers" :items="tblResultado.items" hide-actions item-key="name" v-if="tabelas">
             <template slot="items" slot-scope="props">
               <tr @click="selecionarUsuario(props.item)">
-                <td>{{ props.item.codigo }}</td>
+                <td>{{ props.item.id }}</td>
+                <td>{{ props.item.clube.nome }}</td>
                 <td>{{ props.item.tipodocumento.nome }}</td>
                 <td>{{ props.item.categoria.nome }}</td>
               </tr>
@@ -74,66 +115,134 @@ export default {
   data () {
     return {
       valid: true,
-      tabela: false,
+      tabelas: false,
       filtro: {
         tipoDocumento: [],
-        categoria: []
+        categoria: [],
+        clube: []
       },
       cbb: {
-        tipoDocumento: [ 'Secretaria', 'Tesouraria', 'Projetos' ],
-        categoria: [ 'Secretaria', 'Tesouraria', 'Internos', 'Internacionais' ]
+        tipoDocumento: [],
+        categoria: [],
+        clube: []
       },
       tblResultado: {
         headers: [
-          { text: 'Código', value: 'codigo' },
+          { text: 'Código', value: 'id' },
+          { text: 'Clube', value: 'clube' },
           { text: 'Tipo Documento', value: 'tipodocumento' },
           { text: 'Categoria', value: 'categoria' }
         ],
-        items: [
-          {
-            value: false,
-            codigo: 1,
-            tipodocumento: {
-              codigo: 1,
-              nome: 'Secretaria'
-            },
-            categoria: {
-              codigo: 1,
-              nome: 'Secretaria'
-            }
-          },
-          {
-            value: false,
-            codigo: 1,
-            tipodocumento: {
-              codigo: 1,
-              nome: 'Secretaria'
-            },
-            categoria: {
-              codigo: 1,
-              nome: 'Secretaria'
-            }
-          }
-        ]
+        items: [],
+        mensagem: {
+          tipo: '',
+          mensagem: '',
+          mostrar: false
+        }
       }
     }
   },
   methods: {
     buscar () {
-      this.tabela = true
+      this
+        .axios
+        .get('documento')
+        .then((success) => {
+          let lstItem = []
+          for (var item in success.data.data) {
+            if (success.data.data[item]) {
+              let registro = {
+                id: success.data.data[item].id,
+                clube: success.data.data[item].clube,
+                tipodocumento: success.data.data[item].tipo_documento,
+                categoria: success.data.data[item].categoria
+              }
+              lstItem.push(registro)
+            }
+          }
+          this.tblResultado.items = lstItem
+          this.tabelas = true
+        })
+        .catch((error) => {
+          this.tblResultado.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
+        })
     },
     limpar () {
       this.tabela = false
       this.$refs.form.reset()
     },
-    removeCategoria (item) {
-      this.filtro.categoria.splice(this.filtro.categoria.indexOf(item), 1)
-      this.filtro.categoria = [this.filtro.categoria]
+    getTipoDocumento () {
+      this
+        .axios
+        .get('tipodocumento?situacao=1')
+        .then((success) => {
+          let lstItems = []
+          for (var item in success.data.data) {
+            if (success.data.data[item].id) {
+              let registro = {
+                value: success.data.data[item].id,
+                name: success.data.data[item].nome
+              }
+              lstItems.push(registro)
+            }
+          }
+          this.cbb.tipoDocumento = lstItems
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     },
-    removeTipoDocumento (item) {
-      this.filtro.tipoDocumento.splice(this.filtro.tipoDocumento.indexOf(item), 1)
-      this.filtro.tipoDocumento = [this.filtro.tipoDocumento]
+    getCategoria () {
+      this
+        .axios
+        .get('categoria?situacao=1')
+        .then((success) => {
+          let lstItems = []
+          for (var item in success.data.data) {
+            if (success.data.data[item].id) {
+              let registro = {
+                value: success.data.data[item].id,
+                name: success.data.data[item].nome
+              }
+              lstItems.push(registro)
+            }
+          }
+          this.cbb.categoria = lstItems
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    getClube () {
+      this
+        .axios
+        .get('clube?situacao=1')
+        .then((success) => {
+          let lstItems = []
+          for (var item in success.data.data) {
+            if (success.data.data[item].id) {
+              let registro = {
+                value: success.data.data[item].id,
+                name: success.data.data[item].nome
+              }
+              lstItems.push(registro)
+            }
+          }
+          this.cbb.clube = lstItems
+        })
+        .catch((error) => {
+          console.log(error)
+        })
     }
+  },
+  mounted () {
+    this.getTipoDocumento()
+    this.getCategoria()
+    this.getClube()
   }
 }
 </script>

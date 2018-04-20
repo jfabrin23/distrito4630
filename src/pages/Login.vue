@@ -15,8 +15,8 @@
                 </v-toolbar>
                 <v-card-text>
                   <v-form>
-                    <v-text-field prepend-icon="person" name="usuario" label="Usuário" type="text"></v-text-field>
-                    <v-text-field prepend-icon="lock" name="senha" label="Senha" id="senha" type="password"></v-text-field>
+                    <v-text-field prepend-icon="person" name="usuario" label="Usuário" type="text" v-model="usuario.login"></v-text-field>
+                    <v-text-field prepend-icon="lock" name="senha" label="Senha" id="senha" type="password" v-model="usuario.senha"></v-text-field>
                   </v-form>
                 </v-card-text>
                 <v-card-actions>
@@ -43,15 +43,29 @@ export default {
   data () {
     return {
       drawer: null,
+      usuario: {
+        login: '',
+        senha: ''
+      },
       logoRosa: require('../../static/img/ROSA.png')
     }
   },
   methods: {
     entrar () {
-      /* let chablau = this.user
-      chablau.push({ id: 3, nome: 'Paulo Celso de Brito Jr', clube: { id: 4, nome: 'Rotaract Club de Goioerê' }, tipo: 'admin', avatar: '../../static/img/Avatar/avatar.jpg' })
-      this.$localStorage.set('user', chablau) */
-      this.$router.push('home')
+      this
+        .axios
+        .post('usuario/validalogin', this.usuario)
+        .then((success) => {
+          this.$localStorage.set('user', success.data.data[0])
+          this.$router.push('home')
+        })
+        .catch((error) => {
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
+        })
     }
   },
   props: {

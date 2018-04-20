@@ -35,7 +35,7 @@
                 <v-text-field label="Tipo Documento" v-model="documento.tipo_documento_id" :rules="regrasValidacao.tipo" disabled></v-text-field>
               </v-flex>
               <v-flex xs8 pl-3>
-                <v-text-field v-model="documento.tipoDocumento.nome" disabled></v-text-field>
+                <v-text-field v-model="documento.tipo_documento.nome" disabled></v-text-field>
               </v-flex>
               <v-flex xs1>
                 <v-btn flat icon color="primary" @click.stop="buscarTipoDocumento">
@@ -56,7 +56,14 @@
               </v-flex>
 
               <v-flex xs3>
-                <v-text-field label="Mês Rêf." v-model="documento.mes_referencia" :mask="mask"></v-text-field>
+                <v-menu ref="menu" lazy :close-on-content-click="false" v-model="menu" transition="scale-transition" offset-y full-width :nudge-right="40" max-width="290px" min-width="290px" :return-value.sync="documento.mes_referencia" >
+                  <v-text-field slot="activator" label="Mês Referência" v-model="documento.mes_referencia" readonly ></v-text-field>
+                  <v-date-picker type="month" v-model="documento.mes_referencia" no-title scrollable locale="pt-br">
+                    <v-spacer></v-spacer>
+                    <v-btn flat color="primary" @click="menu = false">Cancel</v-btn>
+                    <v-btn flat color="primary" @click="$refs.menu.save(documento.mes_referencia)">OK</v-btn>
+                  </v-date-picker>
+                </v-menu>
               </v-flex>
 
               <v-flex xs12>
@@ -65,7 +72,7 @@
 
               <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
-              <v-btn @click="anexos = !anexos">Anexos</v-btn>
+              <v-btn @click="anexos = !anexos" :disabled="!habilita">Anexos</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -203,7 +210,7 @@ export default {
   },
   computed: {
     user () {
-      return this.$localStorage.get('user')[0]
+      return this.$localStorage.get('user')
     }
   },
   data () {
@@ -212,6 +219,7 @@ export default {
       valid2: true,
       searchTipoDocumento: '',
       searchCategoria: '',
+      menu: false,
       mensagem: {
         tipo: '',
         texto: '',
@@ -235,7 +243,7 @@ export default {
           nome: ''
         },
         tipo_documento_id: '',
-        tipoDocumento: {
+        tipo_documento: {
           id: '',
           nome: ''
         },
@@ -336,33 +344,23 @@ export default {
         retorno = 'Ativo'
       }
       return retorno
-    },
-    clube (clube) {
-      if (!clube) return ''
-      let nome
-      if (clube === 4) {
-        nome = 'Rotaract Club de Goioerê'
-      } else {
-        nome = 'Nome do clube'
-      }
-      return nome
     }
   },
   methods: {
     salvar () {
+      this.documento.mes_referencia = this.documento.mes_referencia + '-01'
       if (this.$refs.form.validate()) {
-        this.documento.mes_referencia = '2018-04-01'
         if (this.documento.id) {
           this
             .axios
             .put('documento/' + this.documento.id, this.documento)
             .then((success) => {
-              this.limpar()
               this.mensagem = {
                 tipo: 'success',
                 texto: 'Salvo com sucesso!',
                 mostrar: true
               }
+              this.anexos = true
             })
             .catch((error) => {
               this.mensagem = {
@@ -372,18 +370,20 @@ export default {
               }
             })
         } else {
-          let data = new Date()
-          this.documento.data_envio = data.getFullYear() + '-' + data.getMonth() + '-' + data.getDate()
+          let dia = new Date().getDate()
+          let mes = new Date().getMonth() + 1
+          let ano = new Date().getFullYear
+          this.documento.data_envio = ano + '-' + mes + '-' + dia
           this
             .axios
             .post('documento', this.documento)
             .then((success) => {
-              this.limpar()
               this.mensagem = {
                 tipo: 'success',
                 texto: 'Salvo com sucesso!',
                 mostrar: true
               }
+              this.anexos = true
             })
             .catch((error) => {
               this.mensagem = {
@@ -394,6 +394,26 @@ export default {
             })
         }
       }
+    },
+    salvarAnexo () {
+      this
+        .axios
+        .post('anexo/', this.anexo)
+        .then((success) => {
+          this.mensagem = {
+            tipo: 'success',
+            texto: 'Salvo com sucesso!',
+            mostrar: true
+          }
+          this.buscarAnexo()
+        })
+        .catch((error) => {
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
+        })
     },
     selecionarDocumento (item) {
       this.habilita = true
@@ -411,8 +431,9 @@ export default {
       this.documento.categoria = item
     },
     limpar () {
-      this.desabilita = false
       this.$refs.form.reset()
+      this.habilita = false
+      this.carregaDados()
     },
     buscarDocumento () {
       this
@@ -475,14 +496,32 @@ export default {
         .catch((error) => {
           this.lstCategoria.erro = { mostrar: true, texto: error, type: 'error' }
         })
+    },
+    buscarAnexo () {
+      this
+        .axios
+        .get('anexo?documento_id=' + this.documento.id)
+        .then((success) => {
+          this.lstAnexo = success.data.data[0]
+        })
+        .catch((error) => {
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
+        })
+    },
+    carregaDados () {
+      this.documento.clube_id = this.user.clube.id
+      this.documento.clube = this.user.clube
+      this.documento.usuario_id = this.user.id
+      this.documento.usuario.id = this.user.id
+      this.documento.usuario.nome = this.user.nome
     }
   },
   mounted () {
-    this.documento.clube_id = this.user.clube.id
-    this.documento.clube = this.user.clube
-    this.documento.usuario_id = this.user.id
-    this.documento.usuario.id = this.user.id
-    this.documento.usuario.nome = this.user.nome
+    this.carregaDados()
   }
 }
 </script>

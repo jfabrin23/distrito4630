@@ -73,7 +73,7 @@ export default {
   name: 'Header',
   computed: {
     user () {
-      return this.$localStorage.get('user')[0]
+      return this.$localStorage.get('user')
     }
   },
   data () {
@@ -110,6 +110,7 @@ export default {
   },
   mounted () {
     this.usuario = this.user
+    this.usuario.avatar = (this.usuario.avatar) ? this.usuario.avatar : '../../static/img/avatar/default.jpg'
   },
   props: {
     source: String
