@@ -13,7 +13,7 @@
       <hr class="hidden-sm-and-up" />
       <v-list dense>
         <template v-for="item in items">
-          <v-list-group v-if="item.children && !item.admin || item.admin && user.tipo == 'admin'" v-model="item.model" :key="item.text" :prepend-icon="item.model ? item.icon : item['icon-alt']" append-icon="">
+          <v-list-group v-if="item.children && (!item.admin || item.admin && user.tipo === '1')" v-model="item.model" :key="item.text" :prepend-icon="item.model ? item.icon : item['icon-alt']" append-icon="">
             <v-list-tile slot="activator">
               <v-list-tile-content>
                 <v-list-tile-title>
@@ -33,7 +33,7 @@
             </v-list-tile>
           </v-list-group>
 
-          <v-list-tile v-else-if="!item.admin || item.admin && user.tipo == 'admin'" @click="menu(item.router)" :key="item.text">
+          <v-list-tile v-else-if="!item.admin || item.admin && user.tipo === '1'" @click="menu(item.router)" :key="item.text">
             <v-list-tile-action>
               <v-icon>{{ item.icon }}</v-icon>
             </v-list-tile-action>
@@ -83,10 +83,10 @@ export default {
       usuario: {},
       items: [
         { icon: 'home', text: 'Pagina Inicial', router: 'home', admin: false },
-        { icon: 'account_balance', text: 'Clube', router: 'clube', admin: false },
-        { icon: 'person_pin', text: 'Usuário', router: 'usuario', admin: false },
-        { icon: 'library_books', text: 'Tipo de Documento', router: 'tipodocumento', admin: false },
-        { icon: 'loyalty', text: 'Categoria', router: 'categoria', admin: false },
+        { icon: 'account_balance', text: 'Clube', router: 'clube', admin: true },
+        { icon: 'person_pin', text: 'Usuário', router: 'usuario', admin: true },
+        { icon: 'library_books', text: 'Tipo de Documento', router: 'tipodocumento', admin: true },
+        { icon: 'loyalty', text: 'Categoria', router: 'categoria', admin: true },
         {
           icon: 'keyboard_arrow_up',
           'icon-alt': 'keyboard_arrow_down',

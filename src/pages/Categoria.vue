@@ -32,7 +32,7 @@
                 <v-select label="Situação" v-model="categoria.situacao" :items="cbb.situacao" :rules="regrasValidacao.situacao" required autocomplete></v-select>
               </v-flex>
 
-              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-layout>
           </v-form>
@@ -41,32 +41,8 @@
 
       <Rodape />
 
-      <v-dialog v-model="categorias" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Categorias
-          </v-card-title>
-          <v-container grid-list-sm class="pa-4">
-            <v-layout row wrap>
-              <v-flex xs12>
-                <v-text-field label="Buscar" v-model="searchCategoria"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-data-table :headers="lstCategoria.headers" :items="lstCategoria.items" hide-actions item-key="name" :search="searchCategoria" v-if="!lstCategoria.erro.mostrar">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionarCategoria(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.situacao | situacao }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-            <v-alert :type="lstCategoria.erro.tipo" :value="true" v-if="lstCategoria.erro.mostrar">
-              {{lstCategoria.error.texto}}
-            </v-alert>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <!-- Modal Categoria -->
+      <ModalCategoria :lstCategoria='lstCategoria' :modal='categorias' v-on:categoria="selecionarCategoria" v-on:categorias="closeCategoria" v-if="categorias"></ModalCategoria>
     </v-app>
   </div>
 </template>
@@ -74,17 +50,20 @@
 <script>
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
+import ModalCategoria from '@/components/ModalCategoria'
+
 export default {
   name: 'Categoria',
   components: {
     Cabecalho,
-    Rodape
+    Rodape,
+    ModalCategoria
   },
   data () {
     return {
       valid: true,
       categorias: false,
-      searchCategoria: '',
+      loading: false,
       mensagem: {
         tipo: '',
         texto: '',
@@ -139,11 +118,13 @@ export default {
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
+        this.loading = true
         if (this.categoria.id) {
           this
             .axios
             .put('categoria/' + this.categoria.id, this.categoria)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -152,6 +133,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -163,6 +145,7 @@ export default {
             .axios
             .post('categoria', this.categoria)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -171,6 +154,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -184,8 +168,11 @@ export default {
       this.$refs.form.reset()
     },
     selecionarCategoria (item) {
-      this.categorias = false
       this.categoria = item
+      this.categorias = false
+    },
+    closeCategoria (val) {
+      this.categorias = val
     },
     buscarCategoria () {
       this

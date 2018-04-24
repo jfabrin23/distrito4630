@@ -30,7 +30,7 @@
                 <v-select label="Situação" v-model="clube.situacao" :items="cbb.situacao" :rules="regrasValidacao.situacao" required autocomplete></v-select>
               </v-flex>
 
-              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-layout>
           </v-form>
@@ -40,33 +40,7 @@
       <Rodape />
 
       <!-- Modal Clube -->
-      <v-dialog v-model="clubes" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Clubes
-          </v-card-title>
-
-          <v-container grid-list-sm class="pa-4">
-            <v-layout row wrap>
-              <v-flex xs12>
-                <v-text-field label="Buscar" v-model="search"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-data-table :headers="lstClube.headers" :items="lstClube.items" :search="search" hide-actions item-key="id" v-if="!lstClube.erro.mostrar">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionar(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.situacao | situacao}}</td>
-                </tr>
-              </template>
-            </v-data-table>
-            <v-alert :type="lstClube.erro.tipo" :value="true" v-if="lstClube.erro.mostrar">
-              {{lstClube.error.texto}}
-            </v-alert>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <ModalClube :lstClube='lstClube' :modal='clubes' v-on:clube="selecionarClube" v-on:clubes="closeClube" v-if="clubes"></ModalClube>
     </v-app>
   </div>
 </template>
@@ -74,17 +48,20 @@
 <script>
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
+import ModalClube from '@/components/ModalClube'
 
 export default {
   name: 'Clube',
   components: {
     Cabecalho,
-    Rodape
+    Rodape,
+    ModalClube
   },
   data () {
     return {
       valid: true,
       search: '',
+      loading: false,
       clubes: false,
       mensagem: {
         tipo: '',
@@ -140,11 +117,13 @@ export default {
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
+        this.loading = true
         if (this.clube.id) {
           this
             .axios
             .put('clube/' + this.clube.id, this.clube)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -153,6 +132,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -164,6 +144,7 @@ export default {
             .axios
             .post('clube', this.clube)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -172,6 +153,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -188,10 +170,6 @@ export default {
         texto: '',
         mostrar: false
       }
-    },
-    selecionar (item) {
-      this.clubes = false
-      this.clube = item
     },
     buscarClube () {
       this
@@ -213,6 +191,13 @@ export default {
         .catch((error) => {
           this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
         })
+    },
+    closeClube (val) {
+      this.clubes = val
+    },
+    selecionarClube (item) {
+      this.clube = item
+      this.clubes = false
     }
   }
 }

@@ -27,11 +27,11 @@
                 <v-text-field label="Nome" v-model="tipoDocumento.nome" :rules="regrasValidacao.nome" required></v-text-field>
               </v-flex>
 
-              <v-flex xs12>
+              <!-- <v-flex xs12>
                 <v-checkbox label="Mês Ref." v-model="tipoDocumento.mesRef"></v-checkbox>
-              </v-flex>
+              </v-flex> -->
 
-              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-layout>
           </v-form>
@@ -40,32 +40,8 @@
 
       <Rodape />
 
-      <v-dialog v-model="tipoDocumentos" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Tipo de Documentos
-          </v-card-title>
-
-          <v-container grid-list-sm class="pa-4">
-            <v-layout row wrap>
-              <v-flex xs12>
-                <v-text-field label="Buscar" v-model="search"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-data-table :headers="lstTipoDocumento.headers" :items="lstTipoDocumento.items" hide-actions item-key="name" :search="search" v-if="!lstTipoDocumento.erro.mostrar">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionar(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.nome }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-            <v-alert :type="lstTipoDocumento.erro.tipo" :value="true" v-if="lstTipoDocumento.erro.mostrar">
-              {{lstTipoDocumento.error.texto}}
-            </v-alert>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <!-- Modal Tipo Documento -->
+      <ModalTipo :lstTipoDocumento='lstTipoDocumento' :modal='tipoDocumentos' v-on:tipoDocumento="selecionarTipoDocumento" v-on:tipoDocumentos="closeTipoDocumento" v-if="tipoDocumentos"></ModalTipo>
     </v-app>
   </div>
 </template>
@@ -73,17 +49,19 @@
 <script>
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
+import ModalTipo from '@/components/ModalTipo'
 
 export default {
   name: 'TipoDocumento',
   components: {
     Cabecalho,
-    Rodape
+    Rodape,
+    ModalTipo
   },
   data () {
     return {
       valid: true,
-      search: '',
+      loading: false,
       mensagem: {
         tipo: '',
         texto: '',
@@ -117,11 +95,13 @@ export default {
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
+        this.loading = true
         if (this.tipoDocumento.id) {
           this
             .axios
             .put('tipodocumento/' + this.tipoDocumento.id, this.tipoDocumento)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -130,6 +110,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -141,6 +122,7 @@ export default {
             .axios
             .post('tipodocumento', this.tipoDocumento)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -149,6 +131,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -166,9 +149,12 @@ export default {
         mostrar: false
       }
     },
-    selecionar (item) {
-      this.tipoDocumentos = false
+    selecionarTipoDocumento (item) {
       this.tipoDocumento = item
+      this.tipoDocumentos = false
+    },
+    closeTipoDocumento (val) {
+      this.tipoDocumentos = val
     },
     buscarTipoDocumento () {
       this

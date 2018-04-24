@@ -56,7 +56,7 @@
                 <v-select label="Situação" v-model="usuario.situacao" :items="cbb.situacao" :rules="regrasValidacao.situacao" required autocomplete></v-select>
               </v-flex>
 
-              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-layout>
           </v-form>
@@ -66,62 +66,10 @@
       <Rodape />
 
       <!-- Modal Usuários -->
-      <v-dialog v-model="usuarios" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Usuários
-          </v-card-title>
-
-          <v-container grid-list-sm class="pa-4">
-            <v-layout row wrap>
-              <v-flex xs12>
-                <v-text-field label="Buscar" v-model="searchUsuario"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-data-table :headers="lstUsuario.headers" :items="lstUsuario.items" hide-actions item-key="name" :search="searchUsuario" v-if="!lstUsuario.erro.mostrar">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionarUsuario(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.clube.nome }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-            <v-alert :type="lstUsuario.erro.tipo" :value="true" v-if="lstUsuario.erro.mostrar">
-              {{lstUsuario.error.texto}}
-            </v-alert>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <ModalUsuario :lstUsuario='lstUsuario' :modal='usuarios' v-on:usuario="selecionarUsuario" v-on:usuarios="closeUsuario" v-if="usuarios"></ModalUsuario>
 
       <!-- Modal Clubes -->
-      <v-dialog v-model="clubes" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Clubes
-          </v-card-title>
-
-          <v-container grid-list-sm class="pa-4">
-            <v-layout row wrap>
-              <v-flex xs12>
-                <v-text-field label="Buscar" v-model="searchClube"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-data-table :headers="lstClube.headers" :items="lstClube.items" :search="searchClube" hide-actions item-key="id" v-if="!lstClube.erro.mostrar">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionar(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.situacao | situacao}}</td>
-                </tr>
-              </template>
-            </v-data-table>
-            <v-alert :type="lstClube.erro.tipo" :value="true" v-if="lstClube.erro.mostrar">
-              {{lstClube.error.texto}}
-            </v-alert>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <ModalClube :lstClube='lstClube' :modal='clubes' v-on:clube="selecionarClube" v-on:clubes="closeClube" v-if="clubes"></ModalClube>
     </v-app>
   </div>
 </template>
@@ -129,19 +77,22 @@
 <script>
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
+import ModalClube from '@/components/ModalClube'
+import ModalUsuario from '@/components/ModalUsuario'
 
 export default {
   name: 'Usuario',
   components: {
     Cabecalho,
-    Rodape
+    Rodape,
+    ModalClube,
+    ModalUsuario
   },
   data () {
     return {
       e1: true,
+      loading: false,
       valid: true,
-      searchClube: '',
-      searchUsuario: '',
       mensagem: {
         tipo: '',
         texto: '',
@@ -238,11 +189,13 @@ export default {
   methods: {
     salvar () {
       if (this.$refs.form.validate()) {
+        this.loading = true
         if (this.usuario.id) {
           this
             .axios
             .put('usuario/' + this.usuario.id, this.usuario)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -251,6 +204,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -262,6 +216,7 @@ export default {
             .axios
             .post('usuario', this.usuario)
             .then((success) => {
+              this.loading = false
               this.limpar()
               this.mensagem = {
                 tipo: 'success',
@@ -270,6 +225,7 @@ export default {
               }
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -288,23 +244,31 @@ export default {
       }
     },
     selecionarClube (item) {
-      this.clubes = false
       this.usuario.clube_id = item.id
-      this.usuario.clube.nome = item.nome
+      this.usuario.clube = item
+      this.clubes = false
+    },
+    closeClube (val) {
+      this.clubes = val
     },
     selecionarUsuario (item) {
-      this.usuarios = false
       this.usuario = item
+      this.usuarios = false
+    },
+    closeUsuario (val) {
+      this.usuarios = val
     },
     buscarClube () {
       this
         .axios
-        .get('clube')
+        .get('clube?situacao=1')
         .then((retorno) => {
           let lstItems = []
           for (var item in retorno.data.data) {
-            let registro = retorno.data.data[item]
-            lstItems.push(registro)
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
           }
 
           this.lstClube.items = lstItems

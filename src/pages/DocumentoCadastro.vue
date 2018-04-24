@@ -56,12 +56,12 @@
               </v-flex>
 
               <v-flex xs3>
-                <v-menu ref="menu" lazy :close-on-content-click="false" v-model="menu" transition="scale-transition" offset-y full-width :nudge-right="40" max-width="290px" min-width="290px" :return-value.sync="documento.mes_referencia" >
+                <v-menu ref="menu" lazy :close-on-content-click="false" v-model="menu" transition="scale-transition" offset-y full-width :nudge-right="40" max-width="290px" min-width="290px" :return-value.sync="data_selecao" >
                   <v-text-field slot="activator" label="Mês Referência" v-model="documento.mes_referencia" readonly ></v-text-field>
-                  <v-date-picker type="month" v-model="documento.mes_referencia" no-title scrollable locale="pt-br">
+                  <v-date-picker type="month" v-model="data_selecao" no-title scrollable locale="pt-br">
                     <v-spacer></v-spacer>
                     <v-btn flat color="primary" @click="menu = false">Cancel</v-btn>
-                    <v-btn flat color="primary" @click="$refs.menu.save(documento.mes_referencia)">OK</v-btn>
+                    <v-btn flat color="primary" @click="$refs.menu.save(data_selecao)">OK</v-btn>
                   </v-date-picker>
                 </v-menu>
               </v-flex>
@@ -70,9 +70,9 @@
                 <v-text-field name="input-1" label="Observação" v-model="documento.observacao" textarea></v-text-field>
               </v-flex>
 
-              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
-              <v-btn @click="anexos = !anexos" :disabled="!habilita">Anexos</v-btn>
+              <v-btn @click="anexos = true" :disabled="!habilita">Anexos</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -80,121 +80,17 @@
 
       <Rodape />
 
-      <v-dialog v-model="documentos" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Documentos
-          </v-card-title>
-          <v-container grid-list-sm class="pa-4">
-            <v-data-table :headers="lstDocumento.headers" :items="lstDocumento.items" hide-actions item-key="name">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionarDocumento(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.usuario.clube_id | clube }}</td>
-                  <td>{{ props.item.categoria.nome }}</td>
-                  <td>{{ props.item.mes_referencia }}</td>
-                  <td>{{ props.item.data_envio }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <!-- Modal Documento -->
+      <ModalDocumento :lstDocumento='lstDocumento' :modal='documentos' v-on:documento="selecionarDocumento" v-on:documentos="closeDocumento" v-if="documentos"></ModalDocumento>
 
-      <v-dialog v-model="tipoDocumentos" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Tipo de Documentos
-          </v-card-title>
+      <!-- Modal Tipo Documento -->
+      <ModalTipo :lstTipoDocumento='lstTipoDocumento' :modal='tipoDocumentos' v-on:tipoDocumento="selecionarTipoDocumento" v-on:tipoDocumentos="closeTipoDocumento" v-if="tipoDocumentos"></ModalTipo>
 
-          <v-container grid-list-sm class="pa-4">
-            <v-layout row wrap>
-              <v-flex xs12>
-                <v-text-field label="Buscar" v-model="searchTipoDocumento"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-data-table :headers="lstTipoDocumento.headers" :items="lstTipoDocumento.items" hide-actions item-key="name" :search="searchTipoDocumento" v-if="!lstTipoDocumento.erro.mostrar">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionarTipoDocumento(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.nome }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-            <v-alert :type="lstTipoDocumento.erro.tipo" :value="true" v-if="lstTipoDocumento.erro.mostrar">
-              {{lstTipoDocumento.error.texto}}
-            </v-alert>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <!-- Modal Categoria -->
+      <ModalCategoria :lstCategoria='lstCategoria' :modal='categorias' v-on:categoria="selecionarCategoria" v-on:categorias="closeCategoria" v-if="categorias"></ModalCategoria>
 
-      <v-dialog v-model="categorias" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Lista de Categorias
-          </v-card-title>
-          <v-container grid-list-sm class="pa-4">
-            <v-layout row wrap>
-              <v-flex xs12>
-                <v-text-field label="Buscar" v-model="searchCategoria"></v-text-field>
-              </v-flex>
-            </v-layout>
-            <v-data-table :headers="lstCategoria.headers" :items="lstCategoria.items" hide-actions item-key="name" :search="searchCategoria" v-if="!lstCategoria.erro.mostrar">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionarCategoria(props.item)">
-                  <td>{{ props.item.id }}</td>
-                  <td>{{ props.item.nome }}</td>
-                  <td>{{ props.item.situacao | situacao }}</td>
-                </tr>
-              </template>
-            </v-data-table>
-            <v-alert :type="lstCategoria.erro.tipo" :value="true" v-if="lstCategoria.erro.mostrar">
-              {{lstCategoria.error.texto}}
-            </v-alert>
-          </v-container>
-        </v-card>
-      </v-dialog>
-
-      <v-dialog v-model="anexos" width="800px">
-        <v-card>
-          <v-card-title class="modal py-4 title">
-            Cadastro de Anexos
-          </v-card-title>
-          <v-container grid-list-sm class="pa-4">
-            <v-form v-model="valid2" ref="formAnexo" lazy-validation>
-              <v-flex xs12>
-                <v-text-field label="Descrição" v-model="anexo.descricao" :rules="regrasValidacao.descricao" required></v-text-field>
-              </v-flex>
-
-              <v-flex xs12>
-                <v-text-field type="file" label="Anexo" v-model="anexo.arquivo" :rules="regrasValidacao.anexo" required></v-text-field>
-              </v-flex>
-
-              <v-btn color="primary" @click="salvar" :disabled="!valid">Salvar</v-btn>
-              <v-btn @click="limpar">Limpar</v-btn>
-            </v-form>
-            <hr />
-
-            <v-data-table :headers="tblAnexo.headers" :items="tblAnexo.items" hide-actions item-key="name">
-              <template slot="items" slot-scope="props">
-                <tr @click="selecionarUsuario(props.item)">
-                  <td>{{ props.item.numero }}</td>
-                  <td>{{ props.item.descricao }}</td>
-                  <td>
-                    <v-btn flat icon color="primary" @click.stop="deleteAnexo(item)">
-                      <v-icon>clear</v-icon>
-                    </v-btn>
-
-                    <v-btn flat icon color="primary" @click.stop="deleteAnexo(item)">
-                      <v-icon>file_download</v-icon>
-                    </v-btn>
-                  </td>
-                </tr>
-              </template>
-            </v-data-table>
-          </v-container>
-        </v-card>
-      </v-dialog>
+      <!-- Modal Anexo -->
+      <ModalAnexo :documento='documento' :modal='anexos' v-on:anexos="closeAnexo" v-if="anexos"></ModalAnexo>
     </v-app>
   </div>
 </template>
@@ -202,11 +98,20 @@
 <script>
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
+import ModalTipo from '@/components/ModalTipo'
+import ModalCategoria from '@/components/ModalCategoria'
+import ModalDocumento from '@/components/ModalDocumento'
+import ModalAnexo from '@/components/ModalAnexo'
+
 export default {
   name: 'TipoDocumento',
   components: {
     Cabecalho,
-    Rodape
+    Rodape,
+    ModalTipo,
+    ModalCategoria,
+    ModalDocumento,
+    ModalAnexo
   },
   computed: {
     user () {
@@ -216,19 +121,18 @@ export default {
   data () {
     return {
       valid: true,
-      valid2: true,
-      searchTipoDocumento: '',
-      searchCategoria: '',
+      loading: false,
+      documentos: false,
+      tipoDocumentos: false,
+      categorias: false,
+      anexos: false,
+      data_selecao: '',
       menu: false,
       mensagem: {
         tipo: '',
         texto: '',
         mostrar: false
       },
-      documentos: false,
-      tipoDocumentos: false,
-      categorias: false,
-      anexos: false,
       habilita: false,
       mask: '##/####',
       documento: {
@@ -258,11 +162,6 @@ export default {
         anexo: '',
         situacao: '1'
       },
-      anexo: {
-        numero: '',
-        descricao: '',
-        arquivo: ''
-      },
       regrasValidacao: {
         categoria: [
           v => !!v || 'Categoria é obrigatório'
@@ -276,12 +175,6 @@ export default {
         mesRef: [
           v => !!v || 'Mês Ref. é obrigatório',
           v => (v && v.substring(0, 2) <= 12) || 'Mês inválido'
-        ],
-        anexo: [
-          v => !!v || 'Anexo é obrigatório'
-        ],
-        descricao: [
-          v => !!v || 'Descrição é obrigatório'
         ]
       },
       lstDocumento: {
@@ -323,15 +216,14 @@ export default {
           texto: '',
           mostrar: false
         }
-      },
-      tblAnexo: {
-        headers: [
-          { text: 'Código', value: 'id' },
-          { text: 'Descrição', value: 'descricao' },
-          { text: 'Opção', value: 'opcao' }
-        ],
-        items: []
       }
+    }
+  },
+  watch: {
+    data_selecao: function (val) {
+      var data = val.split('-')
+      this.documento.mes_referencia = data[1] + '/' + data[0]
+      console.log(this.documento.mes_referencia)
     }
   },
   filters: {
@@ -344,17 +236,24 @@ export default {
         retorno = 'Ativo'
       }
       return retorno
+    },
+    mesref (val) {
+      var data = val.split('-')
+      return data[1] + '/' + data[0]
     }
   },
   methods: {
     salvar () {
-      this.documento.mes_referencia = this.documento.mes_referencia + '-01'
+      let data = this.documento.mes_referencia.split('/')
+      this.documento.mes_referencia = data[1] + '-' + data[0] + '-01'
       if (this.$refs.form.validate()) {
+        this.loading = true
         if (this.documento.id) {
           this
             .axios
             .put('documento/' + this.documento.id, this.documento)
             .then((success) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'success',
                 texto: 'Salvo com sucesso!',
@@ -363,6 +262,7 @@ export default {
               this.anexos = true
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -372,20 +272,26 @@ export default {
         } else {
           let dia = new Date().getDate()
           let mes = new Date().getMonth() + 1
-          let ano = new Date().getFullYear
+          let ano = new Date().getFullYear()
           this.documento.data_envio = ano + '-' + mes + '-' + dia
           this
             .axios
             .post('documento', this.documento)
             .then((success) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'success',
                 texto: 'Salvo com sucesso!',
                 mostrar: true
               }
+              this.documento = success
+              let mesRef = success.mes_referencia.split('-')
+              this.documento.mes_referencia = mesRef[1] + '/' + mesRef[0]
+              console.log(this.documento)
               this.anexos = true
             })
             .catch((error) => {
+              this.loading = false
               this.mensagem = {
                 tipo: 'error',
                 texto: error,
@@ -395,44 +301,39 @@ export default {
         }
       }
     },
-    salvarAnexo () {
-      this
-        .axios
-        .post('anexo/', this.anexo)
-        .then((success) => {
-          this.mensagem = {
-            tipo: 'success',
-            texto: 'Salvo com sucesso!',
-            mostrar: true
-          }
-          this.buscarAnexo()
-        })
-        .catch((error) => {
-          this.mensagem = {
-            tipo: 'error',
-            texto: error,
-            mostrar: true
-          }
-        })
-    },
     selecionarDocumento (item) {
       this.habilita = true
       this.documento = item
+      let mesRef = item.mes_referencia.split('-')
+      this.documento.mes_referencia = mesRef[1] + '/' + mesRef[0]
       this.documentos = false
     },
     selecionarTipoDocumento (item) {
-      this.tipoDocumentos = false
       this.documento.tipo_documento_id = item.id
-      this.documento.tipoDocumento = item
+      this.documento.tipo_documento = item
+      this.tipoDocumentos = false
     },
     selecionarCategoria (item) {
       this.categorias = false
       this.documento.categoria_id = item.id
       this.documento.categoria = item
     },
+    closeDocumento (val) {
+      this.documentos = val
+    },
+    closeTipoDocumento (val) {
+      this.tipoDocumentos = val
+    },
+    closeCategoria (val) {
+      this.categorias = val
+    },
+    closeAnexo (val) {
+      this.anexos = val
+    },
     limpar () {
       this.$refs.form.reset()
       this.habilita = false
+      this.anexos = false
       this.carregaDados()
     },
     buscarDocumento () {
@@ -458,7 +359,7 @@ export default {
     buscarTipoDocumento () {
       this
         .axios
-        .get('tipodocumento')
+        .get('tipodocumento?situacao=1')
         .then((retorno) => {
           let lstItems = []
           for (var item in retorno.data.data) {
@@ -479,7 +380,7 @@ export default {
     buscarCategoria () {
       this
         .axios
-        .get('categoria')
+        .get('categoria?situacao=1')
         .then((retorno) => {
           let lstItems = []
           for (var item in retorno.data.data) {
@@ -495,21 +396,6 @@ export default {
         })
         .catch((error) => {
           this.lstCategoria.erro = { mostrar: true, texto: error, type: 'error' }
-        })
-    },
-    buscarAnexo () {
-      this
-        .axios
-        .get('anexo?documento_id=' + this.documento.id)
-        .then((success) => {
-          this.lstAnexo = success.data.data[0]
-        })
-        .catch((error) => {
-          this.mensagem = {
-            tipo: 'error',
-            texto: error,
-            mostrar: true
-          }
         })
     },
     carregaDados () {
