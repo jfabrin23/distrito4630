@@ -126,6 +126,7 @@ export default {
       tipoDocumentos: false,
       categorias: false,
       anexos: false,
+      teste: false,
       data_selecao: '',
       menu: false,
       mensagem: {
@@ -134,7 +135,6 @@ export default {
         mostrar: false
       },
       habilita: false,
-      mask: '##/####',
       documento: {
         id: '',
         usuario: {
@@ -223,7 +223,13 @@ export default {
     data_selecao: function (val) {
       var data = val.split('-')
       this.documento.mes_referencia = data[1] + '/' + data[0]
-      console.log(this.documento.mes_referencia)
+    },
+    tipo_documento_id: function () {
+      this.mensagem = {
+        tipo: '',
+        mensagem: '',
+        mostrar: false
+      }
     }
   },
   filters: {
@@ -259,7 +265,8 @@ export default {
                 texto: 'Salvo com sucesso!',
                 mostrar: true
               }
-              this.anexos = true
+              console.log(success)
+              this.getDocumento(success.data.id)
             })
             .catch((error) => {
               this.loading = false
@@ -284,10 +291,7 @@ export default {
                 texto: 'Salvo com sucesso!',
                 mostrar: true
               }
-              this.documento = success
-              let mesRef = success.mes_referencia.split('-')
-              this.documento.mes_referencia = mesRef[1] + '/' + mesRef[0]
-              console.log(this.documento)
+              this.getDocumento(success.data.id)
               this.anexos = true
             })
             .catch((error) => {
@@ -303,9 +307,7 @@ export default {
     },
     selecionarDocumento (item) {
       this.habilita = true
-      this.documento = item
-      let mesRef = item.mes_referencia.split('-')
-      this.documento.mes_referencia = mesRef[1] + '/' + mesRef[0]
+      this.getDocumento(item.id)
       this.documentos = false
     },
     selecionarTipoDocumento (item) {
@@ -374,7 +376,7 @@ export default {
           this.tipoDocumentos = true
         })
         .catch((error) => {
-          this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
+          this.lstTipoDocumento.erro = { mostrar: true, texto: error, type: 'error' }
         })
     },
     buscarCategoria () {
@@ -404,6 +406,24 @@ export default {
       this.documento.usuario_id = this.user.id
       this.documento.usuario.id = this.user.id
       this.documento.usuario.nome = this.user.nome
+    },
+    getDocumento (id) {
+      this
+        .axios
+        .get('documento?id=' + id)
+        .then((success) => {
+          console.log(success.data.data[0])
+          this.documento = success.data.data[0]
+          let mesRef = success.data.data[0].mes_referencia.split('-')
+          this.documento.mes_referencia = mesRef[1] + '/' + mesRef[0]
+        })
+        .catch((error) => {
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
+        })
     }
   },
   mounted () {

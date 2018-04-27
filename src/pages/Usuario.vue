@@ -58,6 +58,7 @@
 
               <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
+              <v-btn @click="excluir" :disabled="btnExcluir">Excluir</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -92,6 +93,7 @@ export default {
     return {
       e1: true,
       loading: false,
+      btnExcluir: true,
       valid: true,
       mensagem: {
         tipo: '',
@@ -237,11 +239,7 @@ export default {
     },
     limpar () {
       this.$refs.form.reset()
-      this.mensagem = {
-        tipo: '',
-        texto: '',
-        mostrar: false
-      }
+      this.btnExcluir = true
     },
     selecionarClube (item) {
       this.usuario.clube_id = item.id
@@ -254,6 +252,7 @@ export default {
     selecionarUsuario (item) {
       this.usuario = item
       this.usuarios = false
+      this.btnExcluir = false
     },
     closeUsuario (val) {
       this.usuarios = val
@@ -298,6 +297,28 @@ export default {
         })
         .catch((error) => {
           this.lstUsuario.erro = { mostrar: true, texto: error, type: 'error' }
+        })
+    },
+    excluir () {
+      this
+        .axios
+        .delete('usuario/' + this.usuario.id)
+        .then((success) => {
+          this.loading = false
+          this.limpar()
+          this.mensagem = {
+            tipo: 'info',
+            texto: 'Excluído com sucesso!',
+            mostrar: true
+          }
+        })
+        .catch((error) => {
+          this.loading = false
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
         })
     }
   }

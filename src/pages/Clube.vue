@@ -32,6 +32,7 @@
 
               <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
+              <v-btn @click="excluir" :disabled="btnExcluir">Excluir</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -63,6 +64,7 @@ export default {
       search: '',
       loading: false,
       clubes: false,
+      btnExcluir: true,
       mensagem: {
         tipo: '',
         texto: '',
@@ -165,11 +167,7 @@ export default {
     },
     limpar () {
       this.$refs.form.reset()
-      this.mensagem = {
-        tipo: '',
-        texto: '',
-        mostrar: false
-      }
+      this.betnExcluir = true
     },
     buscarClube () {
       this
@@ -198,6 +196,29 @@ export default {
     selecionarClube (item) {
       this.clube = item
       this.clubes = false
+      this.btnExcluir = false
+    },
+    excluir () {
+      this
+        .axios
+        .delete('clube/' + this.clube.id)
+        .then((success) => {
+          this.loading = false
+          this.limpar()
+          this.mensagem = {
+            tipo: 'info',
+            texto: 'Excluído com sucesso!',
+            mostrar: true
+          }
+        })
+        .catch((error) => {
+          this.loading = false
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
+        })
     }
   }
 }

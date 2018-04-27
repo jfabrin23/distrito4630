@@ -34,6 +34,7 @@
 
               <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
+              <v-btn @click="excluir" :disabled="btnExcluir">Excluir</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -64,6 +65,7 @@ export default {
       valid: true,
       categorias: false,
       loading: false,
+      btnExcluir: true,
       mensagem: {
         tipo: '',
         texto: '',
@@ -166,10 +168,12 @@ export default {
     },
     limpar () {
       this.$refs.form.reset()
+      this.btnExcluir = true
     },
     selecionarCategoria (item) {
       this.categoria = item
       this.categorias = false
+      this.btnExcluir = false
     },
     closeCategoria (val) {
       this.categorias = val
@@ -193,6 +197,28 @@ export default {
         })
         .catch((error) => {
           this.lstCategoria.erro = { mostrar: true, texto: error, type: 'error' }
+        })
+    },
+    excluir () {
+      this
+        .axios
+        .delete('categoria/' + this.categoria.id)
+        .then((success) => {
+          this.loading = false
+          this.limpar()
+          this.mensagem = {
+            tipo: 'info',
+            texto: 'Excluído com sucesso!',
+            mostrar: true
+          }
+        })
+        .catch((error) => {
+          this.loading = false
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
         })
     }
   }

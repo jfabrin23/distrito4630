@@ -18,7 +18,7 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field type="file" label="Anexo" v-model="anexo.arquivo" :rules="regrasValidacao.anexo" required></v-text-field>
+                <v-text-field type="file" label="Anexo" v-model="anexo.arquivo"></v-text-field>
               </v-flex>
 
               <v-btn color="primary" @click="salvarAnexo" :disabled="!valid2">Salvar</v-btn>
