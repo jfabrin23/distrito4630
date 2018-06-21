@@ -18,13 +18,15 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field type="file" label="Anexo" v-model="anexo.arquivo"></v-text-field>
+                <v-text-field type="file" id="file" label="Anexo" v-model="anexo.arquivo" v-on:change="handleFileUpload()"></v-text-field>
               </v-flex>
 
               <v-btn color="primary" @click="salvarAnexo" :disabled="!valid2">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
             </v-form>
             <hr />
+
+            {{ anexo }}
 
             <v-data-table :headers="tblAnexo.headers" :items="tblAnexo.items" hide-actions item-key="name">
               <template slot="items" slot-scope="props">
@@ -57,7 +59,7 @@ export default {
       search: '',
       valid2: true,
       anexo: {
-        numero: '',
+        documento_id: this.documento.id,
         descricao: '',
         arquivo: ''
       },
@@ -80,13 +82,20 @@ export default {
     }
   },
   methods: {
+    handleFileUpload () {
+      this.anexo.arquivo = this.$refs.file.files[0]
+    },
     selecionar (item) {
       this.$emit('tipoDocumento', item)
     },
     salvarAnexo () {
+      let formData = new FormData()
+      formData.append('documento_id', this.anexo.documento_id)
+      formData.append('descricao', this.anexo.descricao)
+      formData.append('arquivo', this.anexo.arquivo)
       this
         .axios
-        .post('anexo/', this.anexo)
+        .post('anexo/', formData)
         .then((success) => {
           this.mensagem = {
             tipo: 'success',

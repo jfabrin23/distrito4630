@@ -67,12 +67,12 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field name="input-1" label="Observação" v-model="documento.observacao" textarea></v-text-field>
+                <v-text-field name="input-1" label="Observação" v-model="documento.observacao" textarea :rules="regrasValidacao.obs" required></v-text-field>
               </v-flex>
 
               <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
-              <v-btn @click="anexos = true" :disabled="!habilita">Anexos</v-btn>
+              <v-btn @click="anexos = true" :disabled="!btnAnexo">Anexos</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -134,7 +134,7 @@ export default {
         texto: '',
         mostrar: false
       },
-      habilita: false,
+      btnAnexo: false,
       documento: {
         id: '',
         usuario: {
@@ -175,6 +175,9 @@ export default {
         mesRef: [
           v => !!v || 'Mês Ref. é obrigatório',
           v => (v && v.substring(0, 2) <= 12) || 'Mês inválido'
+        ],
+        obs: [
+          v => !!v || 'Observação é obrigatório'
         ]
       },
       lstDocumento: {
@@ -251,9 +254,13 @@ export default {
   methods: {
     salvar () {
       let data = this.documento.mes_referencia.split('/')
-      this.documento.mes_referencia = data[1] + '-' + data[0] + '-01'
+      if (data.length > 1) {
+        console.log(data)
+        this.documento.mes_referencia = data[1] + '-' + data[0] + '-01'
+      }
       if (this.$refs.form.validate()) {
         this.loading = true
+        this.btnAnexo = true
         if (this.documento.id) {
           this
             .axios
@@ -265,7 +272,6 @@ export default {
                 texto: 'Salvo com sucesso!',
                 mostrar: true
               }
-              console.log(success)
               this.getDocumento(success.data.id)
             })
             .catch((error) => {
@@ -306,7 +312,7 @@ export default {
       }
     },
     selecionarDocumento (item) {
-      this.habilita = true
+      this.btnAnexo = true
       this.getDocumento(item.id)
       this.documentos = false
     },
@@ -334,7 +340,7 @@ export default {
     },
     limpar () {
       this.$refs.form.reset()
-      this.habilita = false
+      this.btnAnexo = false
       this.anexos = false
       this.carregaDados()
     },
@@ -343,14 +349,7 @@ export default {
         .axios
         .get('documento')
         .then((retorno) => {
-          let lstItems = []
-          for (var item in retorno.data.data) {
-            if (retorno.data.data[item].id) {
-              let registro = retorno.data.data[item]
-              lstItems.push(registro)
-            }
-          }
-          this.lstDocumento.items = lstItems
+          this.lstDocumento.items = retorno.data.data.filter((valor) => (valor.clube.id === this.user.clube.id))
           this.lstDocumento.erro = { mostrar: false, texto: '', type: '' }
           this.documentos = true
         })
@@ -404,8 +403,12 @@ export default {
       this.documento.clube_id = this.user.clube.id
       this.documento.clube = this.user.clube
       this.documento.usuario_id = this.user.id
-      this.documento.usuario.id = this.user.id
       this.documento.usuario.nome = this.user.nome
+      this.mensagem = {
+        tipo: '',
+        texto: '',
+        mostrar: false
+      }
     },
     getDocumento (id) {
       this

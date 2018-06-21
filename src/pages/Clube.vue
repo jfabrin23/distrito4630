@@ -167,7 +167,7 @@ export default {
     },
     limpar () {
       this.$refs.form.reset()
-      this.betnExcluir = true
+      this.btnExcluir = true
     },
     buscarClube () {
       this

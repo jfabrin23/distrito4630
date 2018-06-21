@@ -57,24 +57,16 @@
                     </v-select>
                   </v-flex>
 
-                  <v-flex xs12>
-                    <v-select label="Clube" :items="cbb.clube" v-model="filtro.clube" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
-                      <template slot="selection" slot-scope="data">
-                        <v-chip close @input="data.parent.selectItem(data.item)" :selected="data.selected" class="chip--select-multi" :key="JSON.stringify(data.item)">
-                          {{ data.item.name }}
-                        </v-chip>
-                      </template>
-                      <template slot="item" slot-scope="data">
-                        <template v-if="typeof data.item !== 'object'">
-                          <v-list-tile-content v-text="data.item"></v-list-tile-content>
-                        </template>
-                        <template v-else>
-                          <v-list-tile-content>
-                            <v-list-tile-title v-html="data.item.name"></v-list-tile-title>
-                          </v-list-tile-content>
-                        </template>
-                      </template>
-                    </v-select>
+                  <v-flex xs3>
+                    <v-text-field label="Clube" v-model="filtro.clube.id" disabled></v-text-field>
+                  </v-flex>
+                  <v-flex xs8 pl-3>
+                    <v-text-field v-model="filtro.clube.nome" disabled></v-text-field>
+                  </v-flex>
+                  <v-flex xs1 v-show="this.user.tipo === '1'">
+                    <v-btn flat icon color="primary" @click="buscarClube">
+                      <v-icon>search</v-icon>
+                    </v-btn>
                   </v-flex>
 
                   <v-btn color="primary" @click="buscar">Buscar</v-btn>
@@ -97,6 +89,9 @@
         </v-container>
       </v-content>
 
+      <!-- Modal Clube -->
+      <ModalClube :lstClube='lstClube' :modal='clubes' v-on:clube="selecionarClube" v-on:clubes="closeClube" v-if="clubes"></ModalClube>
+
       <Rodape />
     </v-app>
   </div>
@@ -105,21 +100,32 @@
 <script>
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
+import ModalClube from '@/components/ModalClube'
 
 export default {
   name: 'DocumentoBusca',
   components: {
     Cabecalho,
-    Rodape
+    Rodape,
+    ModalClube
+  },
+  computed: {
+    user () {
+      return this.$localStorage.get('user')
+    }
   },
   data () {
     return {
+      clubes: false,
       valid: true,
       tabelas: false,
       filtro: {
         tipoDocumento: [],
         categoria: [],
-        clube: []
+        clube: {
+          id: '',
+          nome: ''
+        }
       },
       cbb: {
         tipoDocumento: [],
@@ -139,6 +145,19 @@ export default {
           mensagem: '',
           mostrar: false
         }
+      },
+      lstClube: {
+        headers: [
+          { text: 'Código', value: 'id' },
+          { text: 'Nome', value: 'nome' },
+          { text: 'Situação', value: 'situacao' }
+        ],
+        items: [],
+        erro: {
+          mostrar: false,
+          texto: '',
+          type: ''
+        }
       }
     }
   },
@@ -146,7 +165,7 @@ export default {
     buscar () {
       this
         .axios
-        .get('documento')
+        .get('documento', this.filtro)
         .then((success) => {
           let lstItem = []
           for (var item in success.data.data) {
@@ -169,6 +188,27 @@ export default {
             texto: error,
             mostrar: true
           }
+        })
+    },
+    buscarClube () {
+      this
+        .axios
+        .get('clube')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+
+          this.lstClube.items = lstItems
+          this.lstClube.erro = { mostrar: false, texto: '', type: '' }
+          this.clubes = true
+        })
+        .catch((error) => {
+          this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
         })
     },
     limpar () {
@@ -218,25 +258,12 @@ export default {
         })
     },
     getClube () {
-      this
-        .axios
-        .get('clube?situacao=1')
-        .then((success) => {
-          let lstItems = []
-          for (var item in success.data.data) {
-            if (success.data.data[item].id) {
-              let registro = {
-                value: success.data.data[item].id,
-                name: success.data.data[item].nome
-              }
-              lstItems.push(registro)
-            }
-          }
-          this.cbb.clube = lstItems
-        })
-        .catch((error) => {
-          console.log(error)
-        })
+      this.filtro.clube = this.user.clube
+    },
+    selecionarClube (item) {
+      this.filtro.clube = item
+      this.clubes = false
+      this.btnExcluir = false
     }
   },
   mounted () {

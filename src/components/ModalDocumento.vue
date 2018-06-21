@@ -18,11 +18,12 @@
               <v-text-field label="Buscar" v-model="search"></v-text-field>
             </v-flex>
           </v-layout>
+          {{ lstDocumento.items }}
           <v-data-table :headers="lstDocumento.headers" :items="lstDocumento.items" hide-actions item-key="name" :search='search'>
             <template slot="items" slot-scope="props">
               <tr @click="selecionar(props.item)">
                 <td>{{ props.item.id }}</td>
-                <td>{{ props.item.usuario.clube_id }}</td>
+                <td>{{ props.item.clube.nome }}</td>
                 <td>{{ props.item.categoria.nome }}</td>
                 <td>{{ props.item.mes_referencia }}</td>
                 <td>{{ props.item.data_envio }}</td>
