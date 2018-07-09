@@ -18,7 +18,7 @@
               <v-text-field label="Buscar" v-model="search"></v-text-field>
             </v-flex>
           </v-layout>
-          {{ lstDocumento.items }}
+
           <v-data-table :headers="lstDocumento.headers" :items="lstDocumento.items" hide-actions item-key="name" :search='search'>
             <template slot="items" slot-scope="props">
               <tr @click="selecionar(props.item)">

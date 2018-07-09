@@ -18,7 +18,8 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field type="file" id="file" label="Anexo" v-model="anexo.arquivo" v-on:change="handleFileUpload()"></v-text-field>
+                <v-text-field type="file" id="file" label="Anexo"></v-text-field>
+                <!-- <v-text-field type="file" id="files" ref="files" multiple v-on:change="handleFilesUpload()"></v-text-field> -->
               </v-flex>
 
               <v-btn color="primary" @click="salvarAnexo" :disabled="!valid2">Salvar</v-btn>
@@ -38,7 +39,7 @@
                       <v-icon>clear</v-icon>
                     </v-btn>
 
-                    <v-btn flat icon color="primary" @click.stop="deleteAnexo(item)">
+                    <v-btn flat icon color="primary" @click.stop="baixarAnexo(item)">
                       <v-icon>file_download</v-icon>
                     </v-btn>
                   </td>
@@ -82,20 +83,18 @@ export default {
     }
   },
   methods: {
-    handleFileUpload () {
-      this.anexo.arquivo = this.$refs.file.files[0]
-    },
     selecionar (item) {
       this.$emit('tipoDocumento', item)
     },
     salvarAnexo () {
       let formData = new FormData()
-      formData.append('documento_id', this.anexo.documento_id)
       formData.append('descricao', this.anexo.descricao)
-      formData.append('arquivo', this.anexo.arquivo)
+      formData.append('documento_id', this.anexo.documento_id)
+      var arquivo = document.querySelector('#file')
+      formData.append('arquivo', arquivo.files[0])
       this
         .axios
-        .post('anexo/', formData)
+        .post('anexo/uploaddoc', formData, {headers: {'Content-type': 'multipart/form-data'}})
         .then((success) => {
           this.mensagem = {
             tipo: 'success',
@@ -117,7 +116,14 @@ export default {
         .axios
         .get('anexo?documento_id=' + this.documento.id)
         .then((success) => {
-          this.lstAnexo = success.data.data[0]
+          let lstItems = []
+          for (var item in success.data.data) {
+            if (success.data.data[item].id) {
+              let registro = success.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+          this.tblAnexo.items = lstItems
         })
         .catch((error) => {
           this.mensagem = {
@@ -133,6 +139,12 @@ export default {
     },
     close (val) {
       this.$emit('anexos', val)
+    },
+    baixarAnexo (item) {
+      let blob = new Blob([item.diretorio + '/testepdf.pdf'])
+      let link = document.createElement('a')
+      link.href = window.URL.createObjectURL(blob)
+      link.click()
     }
   },
   mounted () {
