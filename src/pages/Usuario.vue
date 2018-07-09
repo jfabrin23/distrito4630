@@ -126,7 +126,7 @@ export default {
         ],
         senha: [
           v => !!v || 'Senha é obrigatório',
-          v => (v && v.length >= 8) || 'Mínimo de 8 carácteres'
+          v => (v && v.length >= 4) || 'Mínimo de 4 carácteres'
         ],
         tipo: [
           v => !!v || 'Tipo é obrigatório'

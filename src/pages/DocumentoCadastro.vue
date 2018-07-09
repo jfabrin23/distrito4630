@@ -70,9 +70,10 @@
                 <v-text-field name="input-1" label="Observação" v-model="documento.observacao" textarea :rules="regrasValidacao.obs" required></v-text-field>
               </v-flex>
 
-              <v-btn color="primary" @click="salvar" :disabled="!valid" :loading="loading">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid || documento.situacao != 1" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
-              <v-btn @click="anexos = true" :disabled="!btnAnexo">Anexos</v-btn>
+              <v-btn @click="anexos = true" :disabled="!documento.id">Anexos</v-btn>
+              <v-btn color="primary" @click="enviarDocumento" :disabled="!documento.id || documento.situacao != 1" :loading="loadingEnvio">Enviar Documento</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -122,6 +123,7 @@ export default {
     return {
       valid: true,
       loading: false,
+      loadingEnvio: false,
       documentos: false,
       tipoDocumentos: false,
       categorias: false,
@@ -427,6 +429,31 @@ export default {
             mostrar: true
           }
         })
+    },
+    enviarDocumento () {
+      this.loadingEnvio = true
+      if (this.documento.id) {
+        this
+          .axios
+          .put('documento/' + this.documento.id, {'situacao': 2})
+          .then((success) => {
+            this.loadingEnvio = false
+            this.mensagem = {
+              tipo: 'success',
+              texto: 'Enviado com sucesso!',
+              mostrar: true
+            }
+            this.getDocumento(success.data.id)
+          })
+          .catch((error) => {
+            this.loadingEnvio = false
+            this.mensagem = {
+              tipo: 'error',
+              texto: error,
+              mostrar: true
+            }
+          })
+      }
     }
   },
   mounted () {
