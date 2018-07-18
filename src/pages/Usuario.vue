@@ -41,7 +41,7 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field label="Login" v-model="usuario.login" :rules="regrasValidacao.login" required></v-text-field>
+                <v-text-field label="Login" v-model="usuario.login" :rules="regrasValidacao.login" @blur="validaLogin" required></v-text-field>
               </v-flex>
 
               <v-flex xs12>
@@ -173,7 +173,8 @@ export default {
           texto: '',
           type: ''
         }
-      }
+      },
+      teste: true
     }
   },
   filters: {
@@ -189,6 +190,80 @@ export default {
     }
   },
   methods: {
+    buscarClube () {
+      this
+        .axios
+        .get('clube?situacao=1')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+
+          this.lstClube.items = lstItems
+          this.lstClube.erro = { mostrar: false, texto: '', type: '' }
+          this.clubes = true
+        })
+        .catch((error) => {
+          this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
+        })
+    },
+    buscarUsuario () {
+      this
+        .axios
+        .get('usuario')
+        .then((retorno) => {
+          let lstItems = []
+          for (var item in retorno.data.data) {
+            if (retorno.data.data[item].id) {
+              let registro = retorno.data.data[item]
+              lstItems.push(registro)
+            }
+          }
+
+          this.lstUsuario.items = lstItems
+          this.lstUsuario.erro = { mostrar: false, texto: '', type: '' }
+          this.usuarios = true
+        })
+        .catch((error) => {
+          this.lstUsuario.erro = { mostrar: true, texto: error, type: 'error' }
+        })
+    },
+    closeClube (val) {
+      this.clubes = val
+    },
+    closeUsuario (val) {
+      this.usuarios = val
+    },
+    excluir () {
+      this
+        .axios
+        .delete('usuario/' + this.usuario.id)
+        .then((success) => {
+          this.loading = false
+          this.limpar()
+          this.mensagem = {
+            tipo: 'info',
+            texto: 'Excluído com sucesso!',
+            mostrar: true
+          }
+        })
+        .catch((error) => {
+          this.loading = false
+          this.mensagem = {
+            tipo: 'error',
+            texto: error,
+            mostrar: true
+          }
+        })
+    },
+    limpar () {
+      this.$refs.form.reset()
+      this.btnExcluir = true
+    },
     salvar () {
       if (this.$refs.form.validate()) {
         this.loading = true
@@ -237,89 +312,19 @@ export default {
         }
       }
     },
-    limpar () {
-      this.$refs.form.reset()
-      this.btnExcluir = true
-    },
     selecionarClube (item) {
       this.usuario.clube_id = item.id
       this.usuario.clube = item
       this.clubes = false
-    },
-    closeClube (val) {
-      this.clubes = val
     },
     selecionarUsuario (item) {
       this.usuario = item
       this.usuarios = false
       this.btnExcluir = false
     },
-    closeUsuario (val) {
-      this.usuarios = val
-    },
-    buscarClube () {
-      this
-        .axios
-        .get('clube?situacao=1')
-        .then((retorno) => {
-          let lstItems = []
-          for (var item in retorno.data.data) {
-            if (retorno.data.data[item].id) {
-              let registro = retorno.data.data[item]
-              lstItems.push(registro)
-            }
-          }
-
-          this.lstClube.items = lstItems
-          this.lstClube.erro = { mostrar: false, texto: '', type: '' }
-          this.clubes = true
-        })
-        .catch((error) => {
-          this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
-        })
-    },
-    buscarUsuario () {
-      this
-        .axios
-        .get('usuario')
-        .then((retorno) => {
-          let lstItems = []
-          for (var item in retorno.data.data) {
-            if (retorno.data.data[item].id) {
-              let registro = retorno.data.data[item]
-              lstItems.push(registro)
-            }
-          }
-
-          this.lstUsuario.items = lstItems
-          this.lstUsuario.erro = { mostrar: false, texto: '', type: '' }
-          this.usuarios = true
-        })
-        .catch((error) => {
-          this.lstUsuario.erro = { mostrar: true, texto: error, type: 'error' }
-        })
-    },
-    excluir () {
-      this
-        .axios
-        .delete('usuario/' + this.usuario.id)
-        .then((success) => {
-          this.loading = false
-          this.limpar()
-          this.mensagem = {
-            tipo: 'info',
-            texto: 'Excluído com sucesso!',
-            mostrar: true
-          }
-        })
-        .catch((error) => {
-          this.loading = false
-          this.mensagem = {
-            tipo: 'error',
-            texto: error,
-            mostrar: true
-          }
-        })
+    validaLogin (valor) {
+      console.log(valor)
+      this.teste = false
     }
   }
 }
