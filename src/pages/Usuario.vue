@@ -41,7 +41,7 @@
               </v-flex>
 
               <v-flex xs12>
-                <v-text-field label="Login" v-model="usuario.login" :rules="regrasValidacao.login" @blur="validaLogin" required></v-text-field>
+                <v-text-field label="Login" v-model="usuario.login" :rules="regrasValidacao.login" required></v-text-field>
               </v-flex>
 
               <v-flex xs12>
@@ -93,6 +93,7 @@ export default {
     return {
       e1: true,
       loading: false,
+      loadingLogin: false,
       btnExcluir: true,
       valid: true,
       mensagem: {
@@ -173,8 +174,7 @@ export default {
           texto: '',
           type: ''
         }
-      },
-      teste: true
+      }
     }
   },
   filters: {
@@ -321,10 +321,6 @@ export default {
       this.usuario = item
       this.usuarios = false
       this.btnExcluir = false
-    },
-    validaLogin (valor) {
-      console.log(valor)
-      this.teste = false
     }
   }
 }

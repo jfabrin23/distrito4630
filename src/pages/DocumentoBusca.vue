@@ -78,11 +78,16 @@
 
           <v-data-table :headers="tblResultado.headers" :items="tblResultado.items" hide-actions item-key="name" v-if="tabelas">
             <template slot="items" slot-scope="props">
-              <tr @click="selecionarUsuario(props.item)">
+              <tr>
                 <td>{{ props.item.id }}</td>
+                <td>{{ props.item.mes_referencia | mesref }}</td>
                 <td>{{ props.item.clube.nome }}</td>
-                <td>{{ props.item.tipodocumento.nome }}</td>
+                <td>{{ props.item.tipo_documento.nome }}</td>
                 <td>{{ props.item.categoria.nome }}</td>
+                <td>{{ props.item.situacao | situacao }}</td>
+                <td>
+                  <v-btn flat icon color="primary" @click="visualizarItem(props.item)"><v-icon>search</v-icon></v-btn>
+                </td>
               </tr>
             </template>
           </v-data-table>
@@ -92,6 +97,8 @@
       <!-- Modal Clube -->
       <ModalClube :lstClube='lstClube' :modal='clubes' v-on:clube="selecionarClube" v-on:clubes="closeClube" v-if="clubes"></ModalClube>
 
+      <!-- Modal Visualizador -->
+      <ModalVisualizador :documento='documentoVisualizar' :modal='visualizar' v-on:visualizar="closeVisualizar" v-if="visualizar"></ModalVisualizador>
       <Rodape />
     </v-app>
   </div>
@@ -101,17 +108,22 @@
 import Cabecalho from '@/components/Header'
 import Rodape from '@/components/Footer'
 import ModalClube from '@/components/ModalClube'
+import ModalVisualizador from '@/components/ModalVisualizador'
 
 export default {
   name: 'DocumentoBusca',
   components: {
     Cabecalho,
     Rodape,
-    ModalClube
+    ModalClube,
+    ModalVisualizador
   },
   computed: {
     user () {
       return this.$localStorage.get('user')
+    },
+    clube () {
+      return this.$localStorage.get('user.clube')
     }
   },
   data () {
@@ -135,9 +147,12 @@ export default {
       tblResultado: {
         headers: [
           { text: 'Código', value: 'id' },
+          { text: 'Mês Ref', value: 'mes_referencia' },
           { text: 'Clube', value: 'clube' },
           { text: 'Tipo Documento', value: 'tipodocumento' },
-          { text: 'Categoria', value: 'categoria' }
+          { text: 'Categoria', value: 'categoria' },
+          { text: 'Situação', value: 'situacao' },
+          { text: '', value: 'opcao' }
         ],
         items: [],
         mensagem: {
@@ -158,27 +173,74 @@ export default {
           texto: '',
           type: ''
         }
+      },
+      visualizar: false,
+      documentoVisualizar: []
+    }
+  },
+  filters: {
+    mesref (val) {
+      var data = val.split('-')
+      return data[1] + '/' + data[0]
+    },
+    situacao (val) {
+      let situacao = 'Indefinido'
+      switch (val) {
+        case '1':
+          situacao = 'Em Rascunho'
+          break
+        case '2':
+          situacao = 'Enviado Representação'
+          break
+        case '3':
+          situacao = 'Aprovado'
+          break
+        case '4':
+          situacao = 'Recusado'
+          break
       }
+
+      return situacao
     }
   },
   methods: {
     buscar () {
+      let filtroCategoria = 'categoria_id='
+      if (this.filtro.categoria) {
+        for (var cat in this.filtro.categoria) {
+          if (cat > 0) {
+            filtroCategoria += ','
+          }
+          filtroCategoria += this.filtro.categoria[cat]
+        }
+      }
+
+      let filtroTipoDocumento = 'tipo_documento_id='
+      if (this.filtro.tipoDocumento) {
+        for (var tpDoc in this.filtro.tipoDocumento) {
+          if (cat > 0) {
+            filtroTipoDocumento += ','
+          }
+          filtroTipoDocumento += this.filtro.tipoDocumento[tpDoc]
+        }
+      }
+      let filtroClube = 'clube_id='
+      if (this.filtro.clube.id > 0) {
+        filtroClube += this.filtro.clube.id
+      }
+
       this
         .axios
-        .get('documento', this.filtro)
+        .get('documento?' + filtroCategoria + '&' + filtroTipoDocumento + '&' + filtroClube + '&situacao=2,3')
         .then((success) => {
           let lstItem = []
           for (var item in success.data.data) {
             if (success.data.data[item]) {
-              let registro = {
-                id: success.data.data[item].id,
-                clube: success.data.data[item].clube,
-                tipodocumento: success.data.data[item].tipo_documento,
-                categoria: success.data.data[item].categoria
-              }
+              let registro = success.data.data[item]
               lstItem.push(registro)
             }
           }
+          console.log(lstItem)
           this.tblResultado.items = lstItem
           this.tabelas = true
         })
@@ -211,30 +273,9 @@ export default {
           this.lstClube.erro = { mostrar: true, texto: error, type: 'error' }
         })
     },
-    limpar () {
-      this.tabela = false
-      this.$refs.form.reset()
-    },
-    getTipoDocumento () {
-      this
-        .axios
-        .get('tipodocumento?situacao=1')
-        .then((success) => {
-          let lstItems = []
-          for (var item in success.data.data) {
-            if (success.data.data[item].id) {
-              let registro = {
-                value: success.data.data[item].id,
-                name: success.data.data[item].nome
-              }
-              lstItems.push(registro)
-            }
-          }
-          this.cbb.tipoDocumento = lstItems
-        })
-        .catch((error) => {
-          console.log(error)
-        })
+    closeVisualizar (val) {
+      console.log('2')
+      this.visualizar = val
     },
     getCategoria () {
       this
@@ -260,16 +301,46 @@ export default {
     getClube () {
       this.filtro.clube = this.user.clube
     },
+    getTipoDocumento () {
+      this
+        .axios
+        .get('tipodocumento?situacao=1')
+        .then((success) => {
+          let lstItems = []
+          for (var item in success.data.data) {
+            if (success.data.data[item].id) {
+              let registro = {
+                value: success.data.data[item].id,
+                name: success.data.data[item].nome
+              }
+              lstItems.push(registro)
+            }
+          }
+          this.cbb.tipoDocumento = lstItems
+        })
+        .catch((error) => {
+          console.log(error)
+        })
+    },
+    limpar () {
+      this.tabelas = false
+      this.$refs.form.reset()
+    },
     selecionarClube (item) {
       this.filtro.clube = item
       this.clubes = false
       this.btnExcluir = false
+    },
+    visualizarItem (item) {
+      console.log(item)
+      this.documentoVisualizar = item
+      this.visualizar = true
     }
   },
   mounted () {
     this.getTipoDocumento()
     this.getCategoria()
-    this.getClube()
+    if (this.user.tipo !== '1') this.getClube()
   }
 }
 </script>

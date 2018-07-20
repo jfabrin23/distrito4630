@@ -66,14 +66,19 @@
                 </v-menu>
               </v-flex>
 
+              <v-flex xs9 pl-3>
+                <small>Situação:</small><br />
+                <strong>{{ documento.situacao | situacao }}</strong>
+              </v-flex>
+
               <v-flex xs12>
                 <v-text-field name="input-1" label="Observação" v-model="documento.observacao" textarea :rules="regrasValidacao.obs" required></v-text-field>
               </v-flex>
 
-              <v-btn color="primary" @click="salvar" :disabled="!valid || documento.situacao != 1" :loading="loading">Salvar</v-btn>
+              <v-btn color="primary" @click="salvar" :disabled="!valid || (documento.situacao != 1 && documento.situacao != 4)" :loading="loading">Salvar</v-btn>
               <v-btn @click="limpar">Limpar</v-btn>
               <v-btn @click="anexos = true" :disabled="!documento.id">Anexos</v-btn>
-              <v-btn color="primary" @click="enviarDocumento" :disabled="!documento.id || documento.situacao != 1" :loading="loadingEnvio">Enviar Documento</v-btn>
+              <v-btn color="primary" @click="enviarDocumento" :disabled="!documento.id || (documento.situacao != 1 && documento.situacao != 4)" :loading="loadingEnvio">Enviar Documento</v-btn>
             </v-layout>
           </v-form>
         </v-container>
@@ -188,7 +193,7 @@ export default {
           { text: 'Clube', value: 'clube' },
           { text: 'Categoria', value: 'categoria' },
           { text: 'Mês Ref.', value: 'mesRef' },
-          { text: 'Data Envio', value: 'dataEnvio' }
+          { text: 'Situação', value: 'situacao' }
         ],
         items: [],
         erro: {
@@ -238,15 +243,24 @@ export default {
     }
   },
   filters: {
-    situacao (situacao) {
-      if (!situacao) return ''
-      let retorno = ''
-      if (situacao === '0') {
-        retorno = 'Inativo'
-      } else {
-        retorno = 'Ativo'
+    situacao (val) {
+      let situacao = 'Indefinido'
+      switch (val) {
+        case '1':
+          situacao = 'Em Rascunho'
+          break
+        case '2':
+          situacao = 'Enviado Representação'
+          break
+        case '3':
+          situacao = 'Aprovado'
+          break
+        case '4':
+          situacao = 'Recusado'
+          break
       }
-      return retorno
+
+      return situacao
     },
     mesref (val) {
       var data = val.split('-')
@@ -432,10 +446,17 @@ export default {
     },
     enviarDocumento () {
       this.loadingEnvio = true
+      let dia = new Date().getDate()
+      let mes = new Date().getMonth() + 1
+      let ano = new Date().getFullYear()
+      let envio = {'situacao': 2}
+      if (this.documento.situacao !== '4') {
+        envio = {'situacao': 2, data_envio: ano + '-' + mes + '-' + dia}
+      }
       if (this.documento.id) {
         this
           .axios
-          .put('documento/' + this.documento.id, {'situacao': 2})
+          .put('documento/' + this.documento.id, envio)
           .then((success) => {
             this.loadingEnvio = false
             this.mensagem = {

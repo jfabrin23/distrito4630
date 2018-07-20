@@ -89,9 +89,6 @@ export default {
     }
   },
   methods: {
-    selecionar (item) {
-      this.$emit('tipoDocumento', item)
-    },
     salvarAnexo () {
       let formData = new FormData()
       formData.append('descricao', this.anexo.descricao)

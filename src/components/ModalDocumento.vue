@@ -25,8 +25,8 @@
                 <td>{{ props.item.id }}</td>
                 <td>{{ props.item.clube.nome }}</td>
                 <td>{{ props.item.categoria.nome }}</td>
-                <td>{{ props.item.mes_referencia }}</td>
-                <td>{{ props.item.data_envio }}</td>
+                <td>{{ props.item.mes_referencia | mesref }}</td>
+                <td>{{ props.item.situacao | situacao }}</td>
               </tr>
             </template>
           </v-data-table>
@@ -42,6 +42,31 @@ export default {
   data () {
     return {
       search: ''
+    }
+  },
+  filters: {
+    mesref (val) {
+      var data = val.split('-')
+      return data[1] + '/' + data[0]
+    },
+    situacao (val) {
+      let situacao = 'Indefinido'
+      switch (val) {
+        case '1':
+          situacao = 'Em Rascunho'
+          break
+        case '2':
+          situacao = 'Enviado Representação'
+          break
+        case '3':
+          situacao = 'Aprovado'
+          break
+        case '4':
+          situacao = 'Recusado'
+          break
+      }
+
+      return situacao
     }
   },
   methods: {
