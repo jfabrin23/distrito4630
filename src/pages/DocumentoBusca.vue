@@ -18,7 +18,7 @@
               <v-form v-model="valid" ref="form" lazy-validation>
                 <v-layout row wrap>
                   <v-flex xs12>
-                    <v-select label="Categoria" :items="cbb.categoria" v-model="filtro.categoria" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
+                    <v-select label="Tipo Documento" :items="cbb.tipoDocumento" v-model="filtro.tipoDocumento" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
                       <template slot="selection" slot-scope="data">
                         <v-chip close @input="data.parent.selectItem(data.item)" :selected="data.selected" class="chip--select-multi" :key="JSON.stringify(data.item)">
                           {{ data.item.name }}
@@ -36,9 +36,9 @@
                       </template>
                     </v-select>
                   </v-flex>
-
+                  
                   <v-flex xs12>
-                    <v-select label="Tipo Documento" :items="cbb.tipoDocumento" v-model="filtro.tipoDocumento" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
+                    <v-select label="Categoria" :items="cbb.categoria" v-model="filtro.categoria" item-text="name" item-value="value" multiple chips max-height="auto" autocomplete>
                       <template slot="selection" slot-scope="data">
                         <v-chip close @input="data.parent.selectItem(data.item)" :selected="data.selected" class="chip--select-multi" :key="JSON.stringify(data.item)">
                           {{ data.item.name }}

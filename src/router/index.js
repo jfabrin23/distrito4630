@@ -8,6 +8,7 @@ import TipoDocumento from '@/pages/TipoDocumento'
 import Categoria from '@/pages/Categoria'
 import DocumentoBusca from '@/pages/DocumentoBusca'
 import DocumentoCadastro from '@/pages/DocumentoCadastro'
+import AlterarSenha from '@/pages/AlterarSenha'
 
 Vue.use(Router)
 
@@ -52,6 +53,11 @@ export default new Router({
       path: '/documentocadastro',
       name: 'DocumentoCadastro',
       component: DocumentoCadastro
+    },
+    {
+      path: '/alterarsenha',
+      name: 'AlterarSenha',
+      component: AlterarSenha
     },
     {
       path: '*',

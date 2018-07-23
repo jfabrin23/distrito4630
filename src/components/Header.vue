@@ -56,13 +56,27 @@
       </v-toolbar-title>
       <v-spacer></v-spacer>
 
-      <v-avatar class="hidden-sm-and-down">
-        <img :src="user.avatar" alt="John" style="margin-right:25px;">
-      </v-avatar>
-      <span class="hidden-sm-and-down">
-        {{user.nome}} <br/>
-        <small>{{user.clube.nome}}</small>
-      </span>
+      <v-menu offset-y>
+        <v-layout slot="activator">
+          <v-avatar class="hidden-sm-and-down">
+            <img :src="user.avatar" alt="John" style="margin-right:25px;">
+          </v-avatar>
+          <span class="hidden-sm-and-down">
+            {{user.nome}} <br/>
+            <small>{{user.clube.nome}}</small>
+          </span>
+        </v-layout>
+        <v-list>
+          <v-list-tile v-for="submenu in submenus" :key="submenu.text" @click="menu(submenu.router)">
+            <v-list-tile-action>
+              <v-icon>{{ submenu.icon }}</v-icon>
+            </v-list-tile-action>
+            <v-list-tile-content>
+              <v-list-tile-title>{{ submenu.text }}</v-list-tile-title>
+            </v-list-tile-content>
+          </v-list-tile>
+        </v-list>
+      </v-menu>
 
     </v-toolbar>
   </div>
@@ -81,6 +95,10 @@ export default {
       dialog: false,
       drawer: true,
       usuario: {},
+      submenus: [
+        { icon: 'https', text: 'Alterar Senha', router: 'alterarsenha' },
+        { icon: 'exit_to_app', text: 'Sair', router: 'sair' }
+      ],
       items: [
         { icon: 'home', text: 'Pagina Inicial', router: 'home', admin: false },
         { icon: 'account_balance', text: 'Clube', router: 'clube', admin: true },
