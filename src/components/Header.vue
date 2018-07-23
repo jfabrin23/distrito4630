@@ -57,14 +57,15 @@
       <v-spacer></v-spacer>
 
       <v-menu offset-y>
-        <v-layout slot="activator">
-          <v-avatar class="hidden-sm-and-down">
-            <img :src="user.avatar" alt="John" style="margin-right:25px;">
+        <v-layout justify-center slot="activator" class="hidden-sm-and-down">
+          <v-avatar style="margin-right:25px;">
+            <img :src="user.avatar" alt="John">
           </v-avatar>
-          <span class="hidden-sm-and-down">
+          <span  style="margin-right:25px;">
             {{user.nome}} <br/>
             <small>{{user.clube.nome}}</small>
           </span>
+          <v-icon>keyboard_arrow_down</v-icon>
         </v-layout>
         <v-list>
           <v-list-tile v-for="submenu in submenus" :key="submenu.text" @click="menu(submenu.router)">
